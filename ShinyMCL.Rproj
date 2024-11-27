@@ -14,6 +14,6 @@ LaTeX: pdfLaTeX
 
 BuildType: Package
 PackageUseDevtools: Yes
-PackagePath: /Users/simonepernice/Desktop/GIT/GITLAB/CONNECTORanalysis/MCL_shinyapp/shinymcl
+PackagePath: /Users/simonepernice/Desktop/GIT/R_packages_project/MCLexplorer
 PackageInstallArgs: --no-multiarch --with-keep.source
 PackageRoxygenize: rd,collate,namespace

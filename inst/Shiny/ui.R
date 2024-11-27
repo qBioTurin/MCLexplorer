@@ -54,7 +54,7 @@ ui <- dashboardPage(
       }"
                     )
                   ),
-                  tags$li(a(onclick = "window.open('https://gitlab.di.unito.it/shinyapps/shinymcl')",
+                  tags$li(a(onclick = "window.open('https://github.com/qBioTurin/MCLexplorer')",
                             href = NULL,
                             icon("github"),
                             title = "GitHub",
@@ -134,8 +134,8 @@ ui <- dashboardPage(
                 column(6,
                        selectInput(inputId = "tissueMCL",
                                    label = "Tissue:",
-                                   choices = c("BM", "PB"),
-                                   selected = "BM")
+                                   choices = c("Bone Marrow" = "BM","Peripheral Blood" = "PB"),
+                                   selected = "Bone Marrow")
                 )
               ),
               fluidRow(
@@ -143,6 +143,55 @@ ui <- dashboardPage(
                     title = "Clustering Analysis", status = "primary", solidHeader = TRUE,
                     column(12,
                            tabsetPanel(id = "panelsMCL",
+                                       tabPanel("Clustering", value = "panel_Plot",
+                                                fluidRow(
+                                                  column(12, plotOutput("MCL_clusteringPlot",height = "800px"))
+                                                )
+                                       ),
+                                       tabPanel("Survival analysis",value = "panel_survMCL",
+                                                fluidRow(
+                                                  column(6, selectInput("selectSurvMCL",selected = "Clusters",
+                                                                        label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters","Arm - all clusters","Arm - single cluster") ))
+                                                ),
+                                                fluidRow(
+                                                  column(12, uiOutput("MCL_survUIPlot"))
+                                                )
+                                       ),
+                                       tabPanel("Entropy",value = "panel_entropy",
+                                                fluidRow(
+                                                  column(6,
+                                                         sliderInput(inputId = "entropy",
+                                                                     label = "Entropy:",
+                                                                     min = 0,
+                                                                     max = 0,
+                                                                     value = c(0,0)  )
+                                                  ),
+                                                  column(6,
+                                                         sliderInput(inputId = "length",
+                                                                     label = "Curve Length:",
+                                                                     min = 0,
+                                                                     max = 0,
+                                                                     value = c(0,0) )
+                                                  )
+                                                ),
+                                                fluidRow(
+                                                  column(6,
+                                                         plotOutput("MCL_linePlot")
+                                                  ),
+                                                  column(6,
+                                                         plotOutput("MCL_scatterPlot")
+                                                  )
+                                                ),
+                                                fluidRow(
+                                                  column(10,
+                                                         selectInput("SplineID",
+                                                                     label = "Select id curve to check the fitting",
+                                                                     choices = ""
+                                                         ),
+                                                         plotOutput("MCL_FittedCurve")
+                                                  )
+                                                )
+                                       ),
                                        tabPanel("Clinical assestment", value = "panel_Clinical",
                                                 fluidRow(
                                                   column(3,
@@ -199,55 +248,6 @@ ui <- dashboardPage(
                                                 fluidRow(
                                                   column(12, plotOutput("MCL_quantClinicalPlot",height = "400px"))
                                                 )
-                                       ),
-                                       tabPanel("Clustering", value = "panel_Plot",
-                                                fluidRow(
-                                                  column(12, plotOutput("MCL_clusteringPlot",height = "800px"))
-                                                )
-                                       ),
-                                       tabPanel("Survival analysis",value = "panel_survMCL",
-                                                fluidRow(
-                                                  column(6, selectInput("selectSurvMCL",selected = "Clusters",
-                                                                        label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters","Arm - all clusters","Arm - single cluster") ))
-                                                ),
-                                                fluidRow(
-                                                  column(12, uiOutput("MCL_survUIPlot"))
-                                                )
-                                       ),
-                                       tabPanel("Entropy",value = "panel_entropy",
-                                                fluidRow(
-                                                  column(6,
-                                                         sliderInput(inputId = "entropy",
-                                                                     label = "Entropy:",
-                                                                     min = 0,
-                                                                     max = 0,
-                                                                     value = c(0,0)  )
-                                                  ),
-                                                  column(6,
-                                                         sliderInput(inputId = "length",
-                                                                     label = "Curve Length:",
-                                                                     min = 0,
-                                                                     max = 0,
-                                                                     value = c(0,0) )
-                                                  )
-                                                ),
-                                                fluidRow(
-                                                  column(6,
-                                                         plotOutput("MCL_linePlot")
-                                                  ),
-                                                  column(6,
-                                                         plotOutput("MCL_scatterPlot")
-                                                  )
-                                                ),
-                                                fluidRow(
-                                                  column(10,
-                                                         selectInput("SplineID",
-                                                                     label = "Select id curve to check the fitting",
-                                                                     choices = ""
-                                                         ),
-                                                         plotOutput("MCL_FittedCurve")
-                                                  )
-                                                )
                                        )
                            )
                     )
@@ -258,7 +258,10 @@ ui <- dashboardPage(
               h2("YoungerMCL Exploration"),
               fluidRow(
                 column(width = 6,
-                       selectInput(inputId = "tissueBox", label = "Tissue:", choices = c("BM", "PB"))
+                       selectInput(inputId = "tissueBox",
+                                   label = "Tissue:",
+                                   choices = c("Bone Marrow" = "BM","Peripheral Blood" = "PB"),
+                                   selected = "Bone Marrow")
                 )
               ),
               box(width = 12,
@@ -377,7 +380,10 @@ ui <- dashboardPage(
               h2("User Data Exploration"),
               fluidRow(
                 column(width = 4,
-                       selectInput(inputId = "tissueBox_user", label = "Tissue:", choices = c("BM", "PB"))
+                       selectInput(inputId = "tissueBox_user", 
+                                   label = "Tissue:",
+                                   choices = c("Bone Marrow" = "BM","Peripheral Blood" = "PB"),
+                                   selected = "Bone Marrow")
                 ),
                 column(width = 4,
                        selectInput(inputId = "featureTimeSurv_user", 

@@ -9,9 +9,7 @@
 ## Getting started
 
 ```
-devtools::install_gitlab("shinyapps/shinymcl",
-                        host = "gitlab.di.unito.it",
-                        dependencies=TRUE)
+devtools::install_github("qBioTurin/shinymcl", dependencies=TRUE)
 ```
 
 To run the application, it is necessary to install the following version of the CONNECTOR package:
