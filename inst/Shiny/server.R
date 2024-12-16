@@ -554,7 +554,7 @@ server <- function(input, output, session) {
     if(selectColor != "None")
     {
       counts =DatasetClusters[,c("ID","Cluster",selectColor)] %>% distinct()
-      counts= table(DatasetClusters$Cluster, DatasetClusters[,selectColor] )
+      counts= table(counts$Cluster, counts[,selectColor] )
       row_names <- rownames(counts)
       col_names <- colnames(counts)
       
@@ -1235,7 +1235,7 @@ server <- function(input, output, session) {
     if(input$selectColor_user != "None")
     {
       counts =DatasetClusters[,c("ID","Cluster",input$selectColor_user)] %>% distinct()
-      counts= table(DatasetClusters$Cluster, DatasetClusters[,input$selectColor_user] )
+      counts= table(counts$Cluster, counts[,input$selectColor_user] )
       row_names <- rownames(counts)
       col_names <- colnames(counts)
       
