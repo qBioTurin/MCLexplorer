@@ -136,6 +136,12 @@ ui <- dashboardPage(
                                    label = "Tissue:",
                                    choices = c("Bone Marrow" = "BM","Peripheral Blood" = "PB"),
                                    selected = "Bone Marrow")
+                ),
+                column(6,
+                       selectInput(inputId = "ArmMCL",
+                                   label = "Arm:",
+                                   choices = c("No Division" = "NULL","Observational (Arm 0)" = "0","Experimental (Arm 1)" = "1"),
+                                   selected = "No Division")
                 )
               ),
               fluidRow(
@@ -150,8 +156,14 @@ ui <- dashboardPage(
                                        ),
                                        tabPanel("Survival analysis",value = "panel_survMCL",
                                                 fluidRow(
-                                                  column(6, selectInput("selectSurvMCL",selected = "Clusters",
-                                                                        label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters","Arm - all clusters","Arm - single cluster") ))
+                                                  conditionalPanel(condition = "input.ArmMCL == 'NULL'",
+                                                                   column(6, selectInput("selectSurvMCL",selected = "Clusters",
+                                                                                         label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters","Arm - all clusters","Arm - single cluster") ))
+                                                  ) ,
+                                                  conditionalPanel(condition = "input.ArmMCL != 'NULL'",
+                                                                   column(6, selectInput("selectSurvMCL",selected = "Clusters",
+                                                                                         label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters") ))
+                                                  ) 
                                                 ),
                                                 fluidRow(
                                                   column(12, uiOutput("MCL_survUIPlot"))
@@ -247,6 +259,12 @@ ui <- dashboardPage(
                                                 ),
                                                 fluidRow(
                                                   column(12, plotOutput("MCL_quantClinicalPlot",height = "400px"))
+                                                )
+                                       ),
+                                       tabPanel("Table", value = "panel_table",
+                                                fluidRow(
+                                                         DT::DTOutput("DTtableMCL")
+                                                  
                                                 )
                                        )
                            )

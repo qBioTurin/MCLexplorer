@@ -22,10 +22,20 @@ server <- function(input, output, session) {
   
   MCLvalues = reactiveValues(EntropyDF = NULL, ClusterDF = NULL , splinePlots = NULL, info_pz_MCL0208 = NULL)
   
-  observeEvent(input$tissueMCL,{
+  observe({
     show_modal_spinner()
     
-    CONNECTORList.FCM = WholeData$MCL0208[[input$tissueMCL]]$CONNECTORList.FCM
+    tissueMCL= input$tissueMCL
+    ArmMCL = input$ArmMCL
+    
+    isolate({
+    
+    if(ArmMCL == "NULL"){
+      CONNECTORList.FCM = WholeData$MCL0208[[tissueMCL]]$CONNECTORList.FCM
+    }else{
+      CONNECTORList.FCM = WholeData$MCL0208[[tissueMCL]]$ClassSperimClusterOsserav[[paste0("Cluster",ArmMCL)]]
+    }
+    
     MCLvalues$splinePlots = connector::Spline.plots(FCM.plots = ClusterWithMeanCurve(CONNECTORList.FCM,feature = "Dynamic") )
     
     ## Entropy plot
@@ -62,8 +72,6 @@ server <- function(input, output, session) {
     meancurves$Time =CONNECTORList.FCM$CONNECTORList$TimeGrid
     meancurves = meancurves %>% tidyr::gather(-Time, key = "Cluster", value = "Observation")
     
-    CONNECTORList.FCM$CONNECTORList$LabCurv
-    
     df = merge(
       merge(
         CONNECTORList.FCM$FCM$cluster$ClustCurve,
@@ -93,6 +101,9 @@ server <- function(input, output, session) {
     
     updateSliderInput(session = session, inputId = "entropy", min = minE, max = maxE, value = c(minE,maxE) )
     updateSliderInput(session = session, inputId =  "length", min = minL, max = maxL, value = c(minL,maxL) )
+    
+    })
+    
     remove_modal_spinner()
   })
   
@@ -107,12 +118,17 @@ server <- function(input, output, session) {
     grid.draw(PlotComplete)
   })
   
-  
   output$MCL_survPlot <- renderPlot({
     req(MCLvalues$ClusterDF -> df)
     selectSurvMCL = input$selectSurvMCL
     input$tissueMCL -> tissueMCL
+    input$ArmMCL -> arm
     WholeData[["MCL0208"]][[tissueMCL]]$Dataset -> Dataset
+    
+    if(arm != "NULL"){
+      Dataset = Dataset %>% filter(Arm == arm)
+    }
+    
     Dataset = Dataset %>% mutate(ArmLabel = ifelse(Arm == 1,"Lenalidomide Therapy", "No Therapy"))
     
     if(selectSurvMCL == "Arm - single cluster"){
@@ -143,6 +159,10 @@ server <- function(input, output, session) {
         fit <- eval(parse(text = paste0("survfit(Surv(Dataset$TimeTTPevent,Dataset$TTP) ~ Cluster, data = Dataset)")))
       }else if(selectSurvMCL == "Merging Clusters"){
         Dataset = Dataset %>% mutate(Cluster2 = ifelse(Cluster %in% c("A","B"), "A-B", "C-D"))
+        if( length(unique(Dataset$Cluster)) > 4 ) 
+          Dataset = Dataset %>% 
+            mutate(Cluster2 = ifelse(Cluster2 != "A-B", paste0(LETTERS[3:length(unique(Dataset$Cluster))],collapse = "-") ))
+        
         fit <- eval(parse(text = paste0("survfit(Surv(Dataset$TimeTTPevent,Dataset$TTP) ~ Cluster2, data = Dataset)")))
       } 
       
@@ -240,13 +260,46 @@ server <- function(input, output, session) {
   
   
   #### Statistical part 
+  output$DTtableMCL <- DT::renderDT({
+    req(MCLvalues$ClusterDF -> df)
+    input$tissueMCL -> tissue
+    input$ArmMCL -> arm
+    input$qual_varsMCL -> variable
+    
+    if(arm == "NULL"){
+      pz_data = info_pz_MCL0208_connector
+    }else{
+      dftmp = df %>% select(-ID) %>% mutate( ID = paste0(IDold) )  %>% select(ID,Cluster) %>% distinct()
+      colnames(dftmp) = c("ID", paste0("Cluster_",tissue) )
+      pz_data = merge(info_pz_MCL0208_connector %>% select(-Cluster_BM,-Cluster_PB) ,dftmp)
+    }
+    
+    pz_data = pz_data %>% relocate(ID, !!sym(paste0("Cluster_",tissue)),PFS, Arm)
+    
+    DT::datatable(pz_data, filter = 'top',
+                  options = list(
+      pageLength = 5, autoWidth = TRUE
+    )
+    )
+    
+  })
+  
   output$MCL_qualClinicalPlot <- renderPlot({
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
+    input$ArmMCL -> arm
     input$qual_varsMCL -> variable
     
-    if(input$ClusterCheckMCL) test<-test_unified(info_pz_MCL0208_connector,variable,tissue)
-    else test<-test_indipendence(info_pz_MCL0208_connector,variable,tissue)
+    if(arm == "NULL"){
+      pz_data = info_pz_MCL0208_connector
+    }else{
+      dftmp = df %>% select(-ID) %>% mutate( ID = paste0(IDold) )  %>% select(ID,Cluster) %>% distinct()
+      tmp = merge(info_pz_MCL0208_connector,dftmp)
+      pz_data = tmp %>% mutate(Cluster_BM = Cluster, Cluster_PB = Cluster) 
+    }
+
+    if(input$ClusterCheckMCL) test<-test_unified(pz_data,variable,tissue)
+    else test<-test_indipendence(pz_data,variable,tissue)
     
     test$plot & (
       theme(
@@ -265,9 +318,18 @@ server <- function(input, output, session) {
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
     input$quant_varsMCL -> variable
+    input$ArmMCL -> arm
+    
+    if(arm == "NULL"){
+      pz_data = info_pz_MCL0208_connector
+    }else{
+      dftmp = df %>% select(-ID) %>% mutate( ID = paste0(IDold) )  %>% select(ID,Cluster) %>% distinct()
+      tmp = merge(info_pz_MCL0208_connector,dftmp)
+      pz_data = tmp %>% mutate(Cluster_BM = Cluster, Cluster_PB = Cluster) 
+    }
     
     if(input$ClusterCheckMCL){ 
-      test<-test_distr_unified(info_pz_MCL0208_connector,variable,tissue)
+      test<-test_distr_unified(pz_data,variable,tissue)
       plot<-test$plot+
         labs(caption = paste("Shapiro test for normality: * = pvalue<0.05, ** = p-value<0.01 \n",
                              "Kolmogorov-Smirnov test for equal distribution: ",round(test$kw_test$p.value,4),"\n",
@@ -275,7 +337,7 @@ server <- function(input, output, session) {
                              "Levene's test for equal variances:", round(test$levene_test$`Pr(>F)`[1],4),"\n")
         )
     }else{ 
-      test<-test_distribution(info_pz_MCL0208_connector,variable,tissue)
+      test<-test_distribution(pz_data,variable,tissue)
       
       plot<- test$plot+
         labs(caption = paste("Shapiro test for normality: * = pvalue<0.05, ** = p-value<0.01 \n",
@@ -293,6 +355,7 @@ server <- function(input, output, session) {
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
     input$cond_typeMCL -> type
+    input$ArmMCL -> arm
     
     oldtypes = c("All_anyTimeAndTissue","Pavia_DIAG","Pavia_anyTimeAndTissue","Pavia_lost","Pavia_gained","Moia")
     names(oldtypes) = c("CHIP panel - anyTimeAndTissue","CHIP panel - DIAGNOSIS","CHIP panel - anyTimeAndTissue","CHIP panel - lost","CHIP panel - gained","MCL panel")
@@ -358,7 +421,15 @@ server <- function(input, output, session) {
         distinct()
     }
     
-    info_tmp<-full_join(info_pz_MCL0208_connector,mut)
+    if(arm == "NULL"){
+      pz_data = info_pz_MCL0208_connector
+    }else{
+      dftmp = df %>% select(-ID) %>% mutate( ID = paste0(IDold) )  %>% select(ID,Cluster) %>% distinct()
+      tmp = merge(info_pz_MCL0208_connector,dftmp)
+      pz_data = tmp %>% mutate(Cluster_BM = Cluster, Cluster_PB = Cluster) 
+    }
+    
+    info_tmp<-full_join(pz_data,mut)
     qual_vars<-colnames(mut[,2:ncol(mut)])
     
     num_TRUE<-info_tmp%>%

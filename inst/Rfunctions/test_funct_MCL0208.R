@@ -11,6 +11,9 @@ test_indipendence<-function(info_tibble,variable_name,tissue){
   table<-table[rowSums(table)!=0,colSums(table)!=0]
   df<-as.data.frame(table)
   colnames(df)<-c("Var1","Var2","Count")
+  if(length(df$Var1) >4)
+    palette<-c(palette, "#178899")
+  
   mosaicplot<-ggplot(data = df) +
     geom_mosaic(aes(weight = Count, x = product(Var2), fill = Var1),alpha=1)+
     xlab(variable_name)+
@@ -89,7 +92,8 @@ test_unified<-function(info_tibble,variable_name,tissue){
     palette<-c("#3B3571", "#62C75F")
   }
   table<-info_tibble%>%
-    mutate(Cluster_unified=ifelse(!!sym(Cluster_tissue)=="A"|!!sym(Cluster_tissue)=="B","A/B","C/D"))%>%
+    mutate(Cluster_unified=ifelse(!!sym(Cluster_tissue)=="A"|!!sym(Cluster_tissue)=="B","A/B",
+                                  paste0(LETTERS[3:length(unique(info_tibble$Cluster_tissue))],collapse = "/")))%>%
     select(Cluster_unified,all_of(variable_name))%>%
     table()
   table<-table[rowSums(table)!=0,colSums(table)!=0]
@@ -251,7 +255,8 @@ test_distr_unified<-function(info_tibble,variable_name,tissue){
   }
   df<-info_tibble%>%
     filter(!is.na(!!sym(Cluster_tissue))&!is.na(!!sym(variable_name)))%>%
-    mutate(Cluster_unified=ifelse(!!sym(Cluster_tissue)=="A"|!!sym(Cluster_tissue)=="B","A/B","C/D"))%>%
+    mutate(Cluster_unified=ifelse(!!sym(Cluster_tissue)=="A"|!!sym(Cluster_tissue)=="B","A/B",
+                                  paste0(LETTERS[3:length(unique(info_tibble$Cluster_tissue))],collapse = "/") )) %>%
     select(Cluster_unified,all_of(variable_name))
   colnames(df)<-c("Cluster_tissue","variable_name")
   df$Cluster_tissue<-as.factor(df$Cluster_tissue)
