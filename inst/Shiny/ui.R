@@ -15,6 +15,7 @@ library(ggmosaic)
 library(purrr)
 library(car)
 library(cowplot)
+library(DT)
 
 ui <- dashboardPage(
   dashboardHeader(title = "MCL explorer",

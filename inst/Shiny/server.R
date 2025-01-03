@@ -278,7 +278,7 @@ server <- function(input, output, session) {
     
     DT::datatable(pz_data, filter = 'top',
                   options = list(
-      pageLength = 5, autoWidth = TRUE
+      pageLength = 5, autoWidth = TRUE,scrollX = TRUE
     )
     )
     
