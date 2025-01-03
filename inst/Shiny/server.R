@@ -267,15 +267,19 @@ server <- function(input, output, session) {
     input$qual_varsMCL -> variable
     
     if(arm == "NULL"){
-      pz_data = info_pz_MCL0208_connector
+      pz_data = info_pz_MCL0208_connector %>%
+        mutate(Cluster = !!sym(paste0("Cluster_",tissue)) )%>%
+        select(-Cluster_BM,-Cluster_PB)
     }else{
       dftmp = df %>% select(-ID) %>% mutate( ID = paste0(IDold) )  %>% select(ID,Cluster) %>% distinct()
-      colnames(dftmp) = c("ID", paste0("Cluster_",tissue) )
       pz_data = merge(info_pz_MCL0208_connector %>% select(-Cluster_BM,-Cluster_PB) ,dftmp)
     }
     
-    pz_data = pz_data %>% relocate(ID, !!sym(paste0("Cluster_",tissue)),PFS, Arm)
-    
+    pz_data = pz_data  %>% 
+      relocate(ID, Cluster,PFS, Arm) %>%
+      mutate(ID = as.factor(ID),
+             Cluster = as.factor(Cluster))
+
     DT::datatable(pz_data, filter = 'top',
                   options = list(
       pageLength = 5, autoWidth = TRUE,scrollX = TRUE
