@@ -26,82 +26,83 @@ server <- function(input, output, session) {
     show_modal_spinner()
     
     tissueMCL= input$tissueMCL
-    ArmMCL = input$ArmMCL
+    #ArmMCL = input$ArmMCL
+    ArmMCL = "NULL"
     
     isolate({
-    
-    if(ArmMCL == "NULL"){
-      CONNECTORList.FCM = WholeData$MCL0208[[tissueMCL]]$CONNECTORList.FCM
-    }else{
-      CONNECTORList.FCM = WholeData$MCL0208[[tissueMCL]]$ClassSperimClusterOsserav[[paste0("Cluster",ArmMCL)]]
-    }
-    
-    MCLvalues$splinePlots = connector::Spline.plots(FCM.plots = ClusterWithMeanCurve(CONNECTORList.FCM,feature = "Dynamic") )
-    
-    ## Entropy plot
-    probs = CONNECTORList.FCM$FCM$cluster$cl.info$probs
-    colnames(probs) =CONNECTORList.FCM$FCM$cluster$cluster.names
-    Dataset = CONNECTORList.FCM$CONNECTORList$Dataset
-    
-    MatrixClass= as.data.frame(probs)
-    MatrixClass$ClusterType <- colnames(MatrixClass)[apply(MatrixClass, MARGIN = 1, FUN = which.max)]
-    MatrixClass= MatrixClass %>%
-      mutate(MajorClusterValue = pmax(A,B,C,D))
-    
-    ProbMax = as.data.frame(t(sapply(1:dim(probs)[1], function(x) data.frame(ID = x, probMax = max(probs[x,])  ) )))
-    
-    df1 = merge(
-      Dataset %>%
-        group_by(ID) %>%
-        dplyr::summarise(L = length(Time)),
-      MatrixClass %>%
-        mutate(ID = 1:length(ClusterType) ) %>%
-        tidyr::gather(-ID,-MajorClusterValue,-ClusterType,key = "Cluster",value = "Prob") %>%
-        group_by(ID) %>%
-        mutate(Entropy = -sum(Prob*log2(Prob))) %>%
-        ungroup() %>%
-        tidyr::spread(key = "Cluster",value = "Prob") 
-    )
-    
-    
-    ## Curve Plot
-    # means curve 
-    
-    meancurves = as.data.frame(CONNECTORList.FCM$FCM$prediction$meancurves)
-    colnames(meancurves) = CONNECTORList.FCM$FCM$cluster$cluster.names
-    meancurves$Time =CONNECTORList.FCM$CONNECTORList$TimeGrid
-    meancurves = meancurves %>% tidyr::gather(-Time, key = "Cluster", value = "Observation")
-    
-    df = merge(
-      merge(
-        CONNECTORList.FCM$FCM$cluster$ClustCurve,
+      
+      if(ArmMCL == "NULL"){
+        CONNECTORList.FCM = WholeData$MCL0208[[tissueMCL]]$CONNECTORList.FCM
+      }else{
+        CONNECTORList.FCM = WholeData$MCL0208[[tissueMCL]]$ClassSperimClusterOsserav[[paste0("Cluster",ArmMCL)]]
+      }
+      
+      MCLvalues$splinePlots = connector::Spline.plots(FCM.plots = ClusterWithMeanCurve(CONNECTORList.FCM,feature = "Dynamic") )
+      
+      ## Entropy plot
+      probs = CONNECTORList.FCM$FCM$cluster$cl.info$probs
+      colnames(probs) =CONNECTORList.FCM$FCM$cluster$cluster.names
+      Dataset = CONNECTORList.FCM$CONNECTORList$Dataset
+      
+      MatrixClass= as.data.frame(probs)
+      MatrixClass$ClusterType <- colnames(MatrixClass)[apply(MatrixClass, MARGIN = 1, FUN = which.max)]
+      MatrixClass= MatrixClass %>%
+        mutate(MajorClusterValue = pmax(A,B,C,D))
+      
+      ProbMax = as.data.frame(t(sapply(1:dim(probs)[1], function(x) data.frame(ID = x, probMax = max(probs[x,])  ) )))
+      
+      df1 = merge(
+        Dataset %>%
+          group_by(ID) %>%
+          dplyr::summarise(L = length(Time)),
         MatrixClass %>%
           mutate(ID = 1:length(ClusterType) ) %>%
-          tidyr::gather(-ID,-MajorClusterValue, -ClusterType, key = "Cluster", value = "Prob") %>%
+          tidyr::gather(-ID,-MajorClusterValue,-ClusterType,key = "Cluster",value = "Prob") %>%
           group_by(ID) %>%
           mutate(Entropy = -sum(Prob*log2(Prob))) %>%
           ungroup() %>%
-          tidyr::spread(key = "Cluster",value = "Prob") ),
-      CONNECTORList.FCM$CONNECTORList$Dataset
-    ) %>%
-      mutate(Cluster = CONNECTORList.FCM$FCM$cluster$cluster.names[Cluster] ) %>%
-      group_by(ID) %>%
-      dplyr::mutate(L = length(Time) )
-    
-    df = merge(df,CONNECTORList.FCM$CONNECTORList$LabCurv %>% select(ID,IDold),by="ID" )
-    
-    MCLvalues$EntropyDF = df1
-    MCLvalues$ClusterDF = df
-    MCLvalues$meancurves = meancurves
-    
-    maxL = max(df1$L)
-    maxE = max(df1$Entropy)
-    minL = min(df1$L)
-    minE = min(df1$Entropy)
-    
-    updateSliderInput(session = session, inputId = "entropy", min = minE, max = maxE, value = c(minE,maxE) )
-    updateSliderInput(session = session, inputId =  "length", min = minL, max = maxL, value = c(minL,maxL) )
-    
+          tidyr::spread(key = "Cluster",value = "Prob") 
+      )
+      
+      
+      ## Curve Plot
+      # means curve 
+      
+      meancurves = as.data.frame(CONNECTORList.FCM$FCM$prediction$meancurves)
+      colnames(meancurves) = CONNECTORList.FCM$FCM$cluster$cluster.names
+      meancurves$Time =CONNECTORList.FCM$CONNECTORList$TimeGrid
+      meancurves = meancurves %>% tidyr::gather(-Time, key = "Cluster", value = "Observation")
+      
+      df = merge(
+        merge(
+          CONNECTORList.FCM$FCM$cluster$ClustCurve,
+          MatrixClass %>%
+            mutate(ID = 1:length(ClusterType) ) %>%
+            tidyr::gather(-ID,-MajorClusterValue, -ClusterType, key = "Cluster", value = "Prob") %>%
+            group_by(ID) %>%
+            mutate(Entropy = -sum(Prob*log2(Prob))) %>%
+            ungroup() %>%
+            tidyr::spread(key = "Cluster",value = "Prob") ),
+        CONNECTORList.FCM$CONNECTORList$Dataset
+      ) %>%
+        mutate(Cluster = CONNECTORList.FCM$FCM$cluster$cluster.names[Cluster] ) %>%
+        group_by(ID) %>%
+        dplyr::mutate(L = length(Time) )
+      
+      df = merge(df,CONNECTORList.FCM$CONNECTORList$LabCurv %>% select(ID,IDold),by="ID" )
+      
+      MCLvalues$EntropyDF = df1
+      MCLvalues$ClusterDF = df
+      MCLvalues$meancurves = meancurves
+      
+      maxL = max(df1$L)
+      maxE = max(df1$Entropy)
+      minL = min(df1$L)
+      minE = min(df1$Entropy)
+      
+      updateSliderInput(session = session, inputId = "entropy", min = minE, max = maxE, value = c(minE,maxE) )
+      updateSliderInput(session = session, inputId =  "length", min = minL, max = maxL, value = c(minL,maxL) )
+      
     })
     
     remove_modal_spinner()
@@ -122,7 +123,8 @@ server <- function(input, output, session) {
     req(MCLvalues$ClusterDF -> df)
     selectSurvMCL = input$selectSurvMCL
     input$tissueMCL -> tissueMCL
-    input$ArmMCL -> arm
+    # input$ArmMCL -> arm
+    arm = "NULL"
     WholeData[["MCL0208"]][[tissueMCL]]$Dataset -> Dataset
     
     if(arm != "NULL"){
@@ -141,11 +143,18 @@ server <- function(input, output, session) {
         list2env(list(Dataset_cl = Dataset_cl), envir = .GlobalEnv)
         
         ggsurv=ggsurvplot(fit = fit, data = Dataset_cl,
-                          xlab = "Year",  ylab = "TTP",
+                          xlab = "Days",  ylab = "TTP",
                           size = 1, pval = TRUE, risk.table = TRUE,conf.int = T,
                           risk.table.col="strata",ggtheme = theme_bw() ,surv.median.line = "hv" )
         
-        ggsurv$plot + labs(title = paste0("Cluster ", paste0(cl,collapse = " "))  )
+        ggsurv$plot = ggsurv$plot + labs(title = paste0("Cluster ", paste0(cl,collapse = " "))  )
+        
+        surv_median_values = surv_median(fit = fit)
+        if(! all(is.na(surv_median_values$median)))
+          ggsurv$plot = ggsurv$plot +
+          annotate("text", x = surv_median_values$median, y = 0,
+                   label = round(surv_median_values$median/365,digits = 3), size = 3, hjust = 0)
+        
       },Dataset)
       
       
@@ -167,9 +176,15 @@ server <- function(input, output, session) {
       } 
       
       ggsurv=ggsurvplot(fit = fit, data = Dataset,
-                        xlab = "Year",  ylab = "TTP",
+                        xlab = "Days",  ylab = "TTP",
                         size = 1, pval = TRUE, risk.table = TRUE,conf.int = T,
                         risk.table.col="strata",ggtheme = theme_bw() ,surv.median.line = "hv" )
+      
+      surv_median_values = surv_median(fit = fit)
+      if(! all(is.na(surv_median_values$median)))
+        ggsurv$plot = ggsurv$plot +
+        annotate("text", x = surv_median_values$median, y = 0,
+                 label = round(surv_median_values$median,digits = 3), size = 3, hjust = 0)
       
       ggsurv$plot -> pl
     }
@@ -263,7 +278,8 @@ server <- function(input, output, session) {
   output$DTtableMCL <- DT::renderDT({
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
-    input$ArmMCL -> arm
+    # input$ArmMCL -> arm
+    arm = "NULL"
     input$qual_varsMCL -> variable
     
     if(arm == "NULL"){
@@ -279,11 +295,11 @@ server <- function(input, output, session) {
       relocate(ID, Cluster,PFS, Arm) %>%
       mutate(ID = as.factor(ID),
              Cluster = as.factor(Cluster))
-
+    
     DT::datatable(pz_data, filter = 'top',
                   options = list(
-      pageLength = 5, autoWidth = TRUE,scrollX = TRUE
-    )
+                    pageLength = 5, autoWidth = TRUE,scrollX = TRUE
+                  )
     )
     
   })
@@ -291,7 +307,8 @@ server <- function(input, output, session) {
   output$MCL_qualClinicalPlot <- renderPlot({
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
-    input$ArmMCL -> arm
+    # input$ArmMCL -> arm
+    arm = "NULL"
     input$qual_varsMCL -> variable
     
     if(arm == "NULL"){
@@ -301,7 +318,7 @@ server <- function(input, output, session) {
       tmp = merge(info_pz_MCL0208_connector,dftmp)
       pz_data = tmp %>% mutate(Cluster_BM = Cluster, Cluster_PB = Cluster) 
     }
-
+    
     if(input$ClusterCheckMCL) test<-test_unified(pz_data,variable,tissue)
     else test<-test_indipendence(pz_data,variable,tissue)
     
@@ -322,8 +339,8 @@ server <- function(input, output, session) {
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
     input$quant_varsMCL -> variable
-    input$ArmMCL -> arm
-    
+    # input$ArmMCL -> arm
+    arm = "NULL"
     if(arm == "NULL"){
       pz_data = info_pz_MCL0208_connector
     }else{
@@ -359,8 +376,8 @@ server <- function(input, output, session) {
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
     input$cond_typeMCL -> type
-    input$ArmMCL -> arm
-    
+    # input$ArmMCL -> arm
+    arm = "NULL"
     oldtypes = c("All_anyTimeAndTissue","Pavia_DIAG","Pavia_anyTimeAndTissue","Pavia_lost","Pavia_gained","Moia")
     names(oldtypes) = c("CHIP panel - anyTimeAndTissue","CHIP panel - DIAGNOSIS","CHIP panel - anyTimeAndTissue","CHIP panel - lost","CHIP panel - gained","MCL panel")
     oldtypes[type]-> type
@@ -601,7 +618,7 @@ server <- function(input, output, session) {
     ggsurv=ggsurvplot(fit = fit, data = Info_tmp,
                       xlab = "Year",  ylab = "TTP",
                       size = 1, pval = TRUE, risk.table = TRUE,conf.int = T,
-                      risk.table.col="strata",ggtheme = theme_bw() )
+                      risk.table.col="strata",ggtheme = theme_bw(),surv.median.line = "hv"  )
     pval = surv_pvalue(fit = fit, data = Info_tmp, get_coord = TRUE)
     
     ggsurvplot = ggplot() +
@@ -623,6 +640,31 @@ server <- function(input, output, session) {
       scale_x_continuous(breaks = c(0,3,6,9,12,15)*365.25, labels = c(0,3,6,9,12,15))+
       annotate("text", x = pval$pval.x, y = pval$pval.y,
                label = pval$pval.txt, size = 5, hjust = 0)
+    
+    surv_median_values = surv_median(fit = fit)
+    if(! all(is.na(surv_median_values$median)) ){
+      ggsurvplot = ggsurvplot +
+        geom_segment(
+          data = surv_median_values,
+          aes(
+            x = median, xend = median, 
+            y = 0, yend = 0.5, 
+            color = strata
+          ),
+          linetype = "dashed"
+        )+
+        geom_segment(
+          data = surv_median_values,
+          aes(
+            x = 0, xend = median, 
+            y = 0.5, yend = 0.5, 
+            color = strata
+          ),
+          linetype = "dashed"
+        )  +
+        annotate("text", x = surv_median_values$median, y = 0,
+                 label = round(surv_median_values$median/365,digits = 3), size = 3, hjust = 0)
+    }
     
     output$survYoungPlot <- renderPlot({ggsurvplot})
     
@@ -830,7 +872,7 @@ server <- function(input, output, session) {
         ggsurv=ggsurvplot(fit = fit, data = Info_tmp,
                           xlab = "Year",  ylab = "TTP",
                           size = 1, pval = TRUE, risk.table = TRUE,conf.int = T,
-                          risk.table.col="strata",ggtheme = theme_bw() )
+                          risk.table.col="strata",ggtheme = theme_bw(),surv.median.line = "hv"  )
       }, error = function(e) {
         # Display the error message in a Shiny alert if an error occurs
         shinyalert(
@@ -895,6 +937,32 @@ server <- function(input, output, session) {
           scale_x_continuous(breaks = c(0,3,6,9,12,15)*365.25, labels = c(0,3,6,9,12,15))+
           annotate("text", x = pval$pval.x, y = pval$pval.y,
                    label = pval$pval.txt, size = 5, hjust = 0)
+        
+        surv_median_values = surv_median(fit = fit)
+        
+        if(! all(is.na(surv_median_values$median)) ){
+          ggsurvplot = ggsurvplot +
+            geom_segment(
+              data = surv_median_values,
+              aes(
+                x = CutTime+median, xend = CutTime+median, 
+                y = 0, yend = 0.5, 
+                color = strata
+              ),
+              linetype = "dashed"
+            )+
+            geom_segment(
+              data = surv_median_values,
+              aes(
+                x = 0, xend = CutTime+median, 
+                y = 0.5, yend = 0.5, 
+                color = strata
+              ),
+              linetype = "dashed"
+            )  +
+            annotate("text", x = CutTime+surv_median_values$median, y = 0,
+                     label = round(CutTime+surv_median_values$median/365,digits = 3), size = 3, hjust = 0)
+        }
         
         Classification_new = listV$ClassificationOUT$ClassMatrix_entropy %>% select(ID,Cluster)
         meancurves = as.data.frame(listV$CONNECTORList.FCM$FCM$prediction$meancurves)
@@ -1262,7 +1330,7 @@ server <- function(input, output, session) {
       ggsurv=ggsurvplot(fit = fit, data = Info_tmp,
                         xlab = "Time",  ylab = EventSU,
                         size = 1, pval = TRUE, risk.table = TRUE,conf.int = T,
-                        risk.table.col="strata",ggtheme = theme_bw() )
+                        risk.table.col="strata",ggtheme = theme_bw(),surv.median.line = "hv"  )
       
       ListValuesUsers$ClassificationINIT  = list(ggsurvData = ggsurv$data.survplot,
                                                  Classification = ClassMatrix_entropy)
@@ -1517,7 +1585,7 @@ server <- function(input, output, session) {
         ggsurv=ggsurvplot(fit = fit, data = Info_tmp,
                           xlab = "Time",  ylab = EventSU,
                           size = 1, pval = TRUE, risk.table = TRUE,conf.int = T,
-                          risk.table.col="strata",ggtheme = theme_bw() )
+                          risk.table.col="strata",ggtheme = theme_bw(),surv.median.line = "hv"  )
         
         ggsurvDataINIT = ListValuesUsers$ClassificationINIT$ggsurvData
         
@@ -1545,6 +1613,33 @@ server <- function(input, output, session) {
           scale_fill_manual(values = colors)+
           annotate("text", x = pval$pval.x, y = pval$pval.y,
                    label = pval$pval.txt, size = 5, hjust = 0)
+        
+        
+        surv_median_values = surv_median(fit = fit)
+        
+        if(! all(is.na(surv_median_values$median)) ){
+          ggsurvplot = ggsurvplot +
+            geom_segment(
+              data = surv_median_values,
+              aes(
+                x = CutTime+median, xend = CutTime+median, 
+                y = 0, yend = 0.5, 
+                color = strata
+              ),
+              linetype = "dashed"
+            )+
+            geom_segment(
+              data = surv_median_values,
+              aes(
+                x = 0, xend = CutTime+median, 
+                y = 0.5, yend = 0.5, 
+                color = strata
+              ),
+              linetype = "dashed"
+            )  +
+            annotate("text", x = CutTime+surv_median_values$median, y = 0,
+                     label = round(CutTime+surv_median_values$median/365,digits = 3), size = 3, hjust = 0)
+        }
         
         Classification_new = ListValuesUsers$ClassificationOUT$ClassMatrix_entropy %>% select(ID,Cluster)
         meancurves = as.data.frame(ListValuesUsers$CONNECTORList.FCM$FCM$prediction$meancurves)

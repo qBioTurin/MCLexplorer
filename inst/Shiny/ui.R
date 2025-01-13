@@ -118,7 +118,7 @@ ui <- dashboardPage(
                          style = "font-size:14px; color: #666666;",
                          HTML("For more information on the connector methodology, please refer to:"),
                          HTML("Simone Pernice, et al. 'CONNECTOR, fitting and clustering of longitudinal data to reveal a new risk stratification system', Bioinformatics (2023).")
-                         ),
+                       ),
                        br(),
                        tags$a(
                          href = "https://qbioturin.github.io/connector/",
@@ -137,13 +137,13 @@ ui <- dashboardPage(
                                    label = "Tissue:",
                                    choices = c("Bone Marrow" = "BM","Peripheral Blood" = "PB"),
                                    selected = "Bone Marrow")
-                ),
-                column(6,
-                       selectInput(inputId = "ArmMCL",
-                                   label = "Arm:",
-                                   choices = c("No Division" = "NULL","Observational (Arm 0)" = "0","Experimental (Arm 1)" = "1"),
-                                   selected = "No Division")
                 )
+                # column(6,
+                #        selectInput(inputId = "ArmMCL",
+                #                    label = "Arm:",
+                #                    choices = c("No Division" = "NULL","Observational (Arm 0)" = "0","Experimental (Arm 1)" = "1"),
+                #                    selected = "No Division")
+                # )
               ),
               fluidRow(
                 box(width = 12,
@@ -157,14 +157,18 @@ ui <- dashboardPage(
                                        ),
                                        tabPanel("Survival analysis",value = "panel_survMCL",
                                                 fluidRow(
-                                                  conditionalPanel(condition = "input.ArmMCL == 'NULL'",
-                                                                   column(6, selectInput("selectSurvMCL",selected = "Clusters",
-                                                                                         label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters","Arm - all clusters","Arm - single cluster") ))
-                                                  ) ,
-                                                  conditionalPanel(condition = "input.ArmMCL != 'NULL'",
-                                                                   column(6, selectInput("selectSurvMCL",selected = "Clusters",
-                                                                                         label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters") ))
-                                                  ) 
+                                                  column(6, selectInput("selectSurvMCL",selected = "Clusters",
+                                                                        label = "Survival analysis grouping by:",
+                                                                        choices = c("Clusters","Merging Clusters",
+                                                                                    "Arm - all clusters","Arm - single cluster") ))
+                                                  # conditionalPanel(condition = "input.ArmMCL == 'NULL'",
+                                                  #                  column(6, selectInput("selectSurvMCL",selected = "Clusters",
+                                                  #                                        label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters","Arm - all clusters","Arm - single cluster") ))
+                                                  # ) ,
+                                                  # conditionalPanel(condition = "input.ArmMCL != 'NULL'",
+                                                  #                  column(6, selectInput("selectSurvMCL",selected = "Clusters",
+                                                  #                                        label = "Survival analysis grouping by:", choices = c("Clusters","Merging Clusters") ))
+                                                  # ) 
                                                 ),
                                                 fluidRow(
                                                   column(12, uiOutput("MCL_survUIPlot"))
@@ -264,7 +268,7 @@ ui <- dashboardPage(
                                        ),
                                        tabPanel("Table", value = "panel_table",
                                                 fluidRow(
-                                                         DT::DTOutput("DTtableMCL")
+                                                  DT::DTOutput("DTtableMCL")
                                                   
                                                 )
                                        )
@@ -407,8 +411,8 @@ ui <- dashboardPage(
                 column(width = 4,
                        selectInput(inputId = "featureTimeSurv_user", 
                                    label = div(class = "icon-container",
-                                                       h5(tags$b("Feature to use for the time: "), icon("info-circle")),
-                                                       div(class = "icon-text", "The unit time of the event should be in days")
+                                               h5(tags$b("Feature to use for the time: "), icon("info-circle")),
+                                               div(class = "icon-text", "The unit time of the event should be in days")
                                    ), choices = "" )
                 ),
                 column(width = 4,
