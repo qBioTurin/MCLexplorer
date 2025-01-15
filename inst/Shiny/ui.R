@@ -17,6 +17,11 @@ library(car)
 library(cowplot)
 library(DT)
 
+qual_vars<-c("PFS","OS","TTP","TP53_loss_or_mut","TP53","TP53_loss_array","TP53_disruption","Ki67_Classes","BM_INFILTRATION","HIGH_LDH\n","PS_ECOG","HISTOLOGY","AA_STAGE","MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)","Ki67_Classes_1","MIPI_Classes","CLINICAL_SIT_PRE_ASCT","CLINICAL_SIT_postASCT")
+quant_var<-c("flow_at_dia","Age","flow PB","flow BM","%_BM_INFILTR\n","MIPI","HB_LEVEL\n","NEUTRO_COUNT","LYMPHO_COUNT","PLTS","KI_67")
+pharmagen_muts<-c("ABCB1 1236 C>T","ABCB1 2677 G>T,A","ABCB1 2677 G>T,A _2","ABCB1 3435 C,T","Aplotype ABCB1","VEGFA -2055 A>C","VEGFA -2055 A>C _2","ABCG2 421 C>A","FCGR2A 497 A>G","NCF4 -368 G>A","GSTP1 313 A>G","CRBN_1_rs1714327","CRBN_2_rs1705814") 
+
+
 ui <- dashboardPage(
   dashboardHeader(title = "MCL explorer",
                   tags$li(
@@ -215,55 +220,68 @@ ui <- dashboardPage(
                                                          checkboxInput("ClusterCheckMCL",label = "Unify the CONNECTOR clusters.")
                                                   )
                                                 ),
-                                                h2("Qualitative Analysis"),
-                                                fluidRow(
-                                                  column(6,
-                                                         conditionalPanel(condition = "input.ClusterCheckMCL",
-                                                                          selectInput(inputId = "qual_varsMCL",
-                                                                                      label = "Variables:",
-                                                                                      choices = c("PFS","OS","MIPI","TTP","TP53_loss_or_mut","TP53","TP53_loss_array","TP53_disruption","Arm","Ki67_Classes",
-                                                                                                  "BM_INFILTRATION","HIGH_LDH\n","PS_ECOG","HISTOLOGY","AA_STAGE","MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)",
-                                                                                                  "Ki67_Classes_1","MIPI_Classes"),
-                                                                                      selected = "PFS")
-                                                         ),
-                                                         conditionalPanel(condition = "!input.ClusterCheckMCL",
-                                                                          selectInput(inputId = "qual_varsMCL",
-                                                                                      label = "Variables:",
-                                                                                      choices = c("PFS","OS","TTP","TP53_loss_or_mut","TP53","TP53_loss_array","TP53_disruption","Arm","Ki67_Classes",
-                                                                                                  "BM_INFILTRATION","HIGH_LDH\n","PS_ECOG","HISTOLOGY","AA_STAGE","MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)",
-                                                                                                  "Ki67_Classes_1","MIPI_Classes"),
-                                                                                      selected = "PFS")
-                                                         )
-                                                  )
+                                                box(title = h2("Qualitative Analysis"),width = 12,collapsible = T,collapsed = T,
+                                                    fluidRow(
+                                                      column(6,
+                                                             conditionalPanel(condition = "input.ClusterCheckMCL",
+                                                                              selectInput(inputId = "qual_varsMCL",
+                                                                                          label = "Variables:",
+                                                                                          choices = c("MIPI",qual_vars),
+                                                                                          selected = "PFS")
+                                                             ),
+                                                             conditionalPanel(condition = "!input.ClusterCheckMCL",
+                                                                              selectInput(inputId = "qual_varsMCL",
+                                                                                          label = "Variables:",
+                                                                                          choices = qual_vars,
+                                                                                          selected = "PFS")
+                                                             )
+                                                      )
+                                                    ),
+                                                    fluidRow(
+                                                      column(12, plotOutput("MCL_qualClinicalPlot",height = "400px"))
+                                                    )
                                                 ),
-                                                fluidRow(
-                                                  column(12, plotOutput("MCL_qualClinicalPlot",height = "400px"))
+                                                box(title = h2("Qualitative Analysis - Gene Mutations"),width = 12,
+                                                    collapsible = T,collapsed = T,
+                                                    fluidRow(
+                                                      # column(3,
+                                                      #        selectInput(inputId = "cond_typeMCL",
+                                                      #                    label = "Types:",
+                                                      #                    choices = c("CHIP panel - anyTimeAndTissue","CHIP panel - DIAGNOSIS","CHIP panel - anyTimeAndTissue","CHIP panel - lost","CHIP panel - gained","MCL panel"),
+                                                      #                    selected = "All_anyTimeAndTissue")
+                                                      # ),
+                                                      column(3,
+                                                             selectInput(inputId = "var_typeMCL",
+                                                                         label = "Variables:",choices = "")
+                                                      )
+                                                    ),
+                                                    fluidRow(
+                                                      column(12, plotOutput("MCL_MutationPlot",height = "400px"))
+                                                    )
                                                 ),
-                                                h2("Qualitative Analysis - Gene Mutations"),
-                                                fluidRow(
-                                                  column(3,
-                                                         selectInput(inputId = "cond_typeMCL",
-                                                                     label = "Types:",
-                                                                     choices = c("CHIP panel - anyTimeAndTissue","CHIP panel - DIAGNOSIS","CHIP panel - anyTimeAndTissue","CHIP panel - lost","CHIP panel - gained","MCL panel"),
-                                                                     selected = "All_anyTimeAndTissue")
-                                                  ),
-                                                  column(3,
-                                                         selectInput(inputId = "var_typeMCL",
-                                                                     label = "Variables:",choices = "")
-                                                  )
+                                                box(title = h2("Qualitative Analysis"),width = 12,
+                                                    collapsible = T,collapsed = T,
+                                                    fluidRow(
+                                                      selectInput(inputId = "quant_varsMCL",
+                                                                  label = "Variables:",
+                                                                  choices = quant_var,
+                                                                  selected = "flow_at_dia")
+                                                    ),
+                                                    fluidRow(
+                                                      column(12, plotOutput("MCL_quantClinicalPlot",height = "400px"))
+                                                    )
                                                 ),
-                                                fluidRow(
-                                                  column(12, plotOutput("MCL_MutationPlot",height = "400px"))
-                                                ),
-                                                h2("Quantitative Analysis"),
-                                                fluidRow(
-                                                  selectInput(inputId = "quant_varsMCL",
-                                                              label = "Variables:",
-                                                              choices = c("flow_at_dia","Age","flow PB","flow BM","%_BM_INFILTR\n","MIPI","HB_LEVEL\n","NEUTRO_COUNT","LYMPHO_COUNT","PLTS","KI_67"),
-                                                              selected = "flow_at_dia")
-                                                ),
-                                                fluidRow(
-                                                  column(12, plotOutput("MCL_quantClinicalPlot",height = "400px"))
+                                                box(title = h2("Pharmacogenomic Analysis"),width = 12,
+                                                    collapsible = T,collapsed = T,
+                                                    fluidRow(
+                                                      selectInput(inputId = "pharma_varsMCL",
+                                                                  label = "Variables:",
+                                                                  choices = pharmagen_muts,
+                                                                  selected = "ABCB1 1236 C>T")
+                                                    ),
+                                                    fluidRow(
+                                                      column(12, plotOutput("MCL_pharmaPlot",height = "400px"))
+                                                    )
                                                 )
                                        ),
                                        tabPanel("Table", value = "panel_table",
