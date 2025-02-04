@@ -9,7 +9,7 @@
 ## Getting started
 
 ```
-devtools::install_github("qBioTurin/shinymcl", dependencies=TRUE)
+devtools::install_github("qBioTurin/mclexplorer", dependencies=TRUE)
 ```
 
 To run the application, it is necessary to install the following version of the CONNECTOR package:
@@ -21,7 +21,7 @@ devtools::install_github("qBioTurin/connector", ref="Classification",dependencie
 ## How to run 
 
 ```
-ShinyMCL::ShinyMCL.run()
+mclexplorer::mclexplorer.run()
 ```
 
 

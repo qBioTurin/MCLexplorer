@@ -971,7 +971,7 @@ server <- function(input, output, session) {
       
       tryCatch({
         ggsurv=ggsurvplot(fit = fit, data = Info_tmp,
-                          xlab = "Year",  ylab = "TTP",
+                          xlab = "Days",  ylab = "TTP",
                           size = 1, pval = TRUE, risk.table = TRUE,conf.int = T,
                           risk.table.col="strata",ggtheme = theme_bw(),surv.median.line = "hv"  )
       }, error = function(e) {
@@ -1062,7 +1062,7 @@ server <- function(input, output, session) {
               linetype = "dashed"
             )  +
             annotate("text", x = CutTime+surv_median_values$median, y = 0,
-                     label = round(CutTime+surv_median_values$median/365,digits = 3), size = 3, hjust = 0)
+                     label = round((CutTime+surv_median_values$median)/365,digits = 3), size = 3, hjust = 0)
         }
         
         Classification_new = listV$ClassificationOUT$ClassMatrix_entropy %>% select(ID,Cluster)

@@ -1,5 +1,5 @@
-Package: ShinyMCL
-Title: ShinyMCL: connector analysis in MCL.
+Package: mclexplorer
+Title: mclexplorer: connector analysis in MCL.
 Version: 1.0
 Authors@R: 
     c(person("Simone", "Pernice", , "simone.pernice@unito.it", role = c("cre"),

@@ -1,5 +1,5 @@
-#' @title Run ShinyMCL
-#' @description function to lunch the ShinyMCL shiny application.
+#' @title Run mclexplorer
+#' @description function to lunch the mclexplorer shiny application.
 #'
 #' @param 
 #'
@@ -10,16 +10,16 @@
 #' 
 #' @examples
 #'\dontrun{
-#' ShinyMCL.run()
+#' mclexplorer.run()
 #' }
 #' @export
 
-ShinyMCL.run <-function()
+mclexplorer.run <-function()
 {
   x = T
   
-  Appui <- system.file("Shiny","ui.R", package = "ShinyMCL")
-  Appserver <- system.file("Shiny","server.R", package = "ShinyMCL")
+  Appui <- system.file("Shiny","ui.R", package = "mclexplorer")
+  Appserver <- system.file("Shiny","server.R", package = "mclexplorer")
   
   source(Appui)
   source(Appserver)
@@ -30,7 +30,7 @@ ShinyMCL.run <-function()
   )
   
   app$staticPaths <- list(
-    `/` = httpuv::staticPath(system.file("Shiny","www", package = "ShinyMCL"), indexhtml = FALSE, fallthrough = TRUE)
+    `/` = httpuv::staticPath(system.file("Shiny","www", package = "mclexplorer"), indexhtml = FALSE, fallthrough = TRUE)
   )
   
   shiny::runApp(app)
