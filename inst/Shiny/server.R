@@ -1,10 +1,10 @@
-WholeData <- readRDS( system.file("Data","WholeData.RDs", package = "ShinyMCL") )
-SurvYOUNGERData <- readRDS( system.file("Data","YoungerMCLsurvival.RDs", package = "ShinyMCL") )
-ColorCluster <- readRDS( system.file("Data","ColorCluster.RDs", package = "ShinyMCL") )
-Condensed_mut <- readRDS( system.file("Data","Condensed_mut.RDs", package = "ShinyMCL") )
-info_pz_MCL0208_connector <- readRDS( system.file("Data","info_pz_MCL0208_connector.RDs", package = "ShinyMCL") )
-source( system.file("Shiny","AuxFunctions.R", package = "ShinyMCL") )
-source( system.file("Rfunctions","test_funct_MCL0208.R", package = "ShinyMCL") )
+WholeData <- readRDS( system.file("Data","WholeData.RDs", package = "mclexplorer") )
+SurvYOUNGERData <- readRDS( system.file("Data","YoungerMCLsurvival.RDs", package = "mclexplorer") )
+ColorCluster <- readRDS( system.file("Data","ColorCluster.RDs", package = "mclexplorer") )
+Condensed_mut <- readRDS( system.file("Data","Condensed_mut.RDs", package = "mclexplorer") )
+info_pz_MCL0208_connector <- readRDS( system.file("Data","info_pz_MCL0208_connector.RDs", package = "mclexplorer") )
+source( system.file("Shiny","AuxFunctions.R", package = "mclexplorer") )
+source( system.file("Rfunctions","test_funct_MCL0208.R", package = "mclexplorer") )
 
 axistheme = theme(
   plot.caption = element_text(size = 12, face = "italic", family = "Times"),
@@ -598,7 +598,7 @@ server <- function(input, output, session) {
                          pl = NULL,
                          LPanalysis = NULL)
   
-  ColorCluster <- readRDS( system.file("Data","ColorCluster.RDs", package = "ShinyMCL") )
+  ColorCluster <- readRDS( system.file("Data","ColorCluster.RDs", package = "mclexplorer") )
   Steps <- c("BASELINE","RCHOP","ARAC","ASCT",paste0("M",seq(6,36,6)))
   
   observeEvent(input$tissueBox,{  
