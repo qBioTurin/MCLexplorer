@@ -186,7 +186,7 @@ server <- function(input, output, session) {
         annotate("text", x = surv_median_values$median, y = 0,
                  label = round(surv_median_values$median,digits = 3), size = 3, hjust = 0)
       
-      ggsurv$plot -> pl
+      ggsurv$plot/ggsurv$table -> pl
     }
     
     pl
@@ -280,7 +280,7 @@ server <- function(input, output, session) {
     input$tissueMCL -> tissue
     # input$ArmMCL -> arm
     arm = "NULL"
-    input$qual_varsMCL -> variable
+    input$varsMCL -> variable
     
     if(arm == "NULL"){
       pz_data = info_pz_MCL0208_connector %>%
@@ -303,14 +303,14 @@ server <- function(input, output, session) {
     )
     
   })
-  
-  output$MCL_qualClinicalPlot <- renderPlot({
+
+  output$MCL_ClinicalPlot <- renderPlot({
     req(MCLvalues$ClusterDF -> df)
     input$ClusterCheckMCL
     input$tissueMCL -> tissue
     # input$ArmMCL -> arm
     arm = "NULL"
-    input$qual_varsMCL -> variable
+    input$varsMCL -> variable
     
     if(arm == "NULL"){
       pz_data = info_pz_MCL0208_connector
@@ -320,107 +320,91 @@ server <- function(input, output, session) {
       pz_data = tmp %>% mutate(Cluster_BM = Cluster, Cluster_PB = Cluster) 
     }
     
-    if(input$ClusterCheckMCL){
-      pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
-      if(tissue=="BM"){
-        palette<-c("#F1BB7B", "#FD6467", "#5B1A18", "#D67236")
+    if(variable %in% qual_vars){
+      if(input$ClusterCheckMCL){
+        pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
+        if(tissue=="BM"){
+          palette<-c("#F1BB7B", "#FD6467", "#5B1A18", "#D67236")
+        }
+        else if(tissue=="PB"){
+          palette<-c("#440154", "#31688E", "#35B779", "#8FD744")
+        }
+      }else{
+        if(tissue=="BM"){
+          palette<-c("#F1BB7B", "#FD6467", "#5B1A18", "#D67236")
+        }
+        else if(tissue=="PB"){
+          palette<-c("#440154", "#31688E", "#35B779", "#8FD744")
+        }
       }
-      else if(tissue=="PB"){
-        palette<-c("#440154", "#31688E", "#35B779", "#8FD744")
-      }
-    }else{
-      if(tissue=="BM"){
-        palette<-c("#F1BB7B", "#FD6467", "#5B1A18", "#D67236")
-      }
-      else if(tissue=="PB"){
-        palette<-c("#440154", "#31688E", "#35B779", "#8FD744")
+      
+      test<-test_indipendence(pz_data,variable,paste0("Cluster_",tissue),palette)
+      
+      plot<- test$plot & (
+        theme(
+          legend.position = "bottom",
+          panel.background = element_rect(fill='transparent'),
+          plot.background = element_rect(fill='transparent', color=NA),
+          legend.background = element_rect(fill='transparent'),
+          legend.box.background = element_rect(fill='transparent')
+        ) +
+          axistheme 
+      )
+    }else if(variable %in% quant_vars){
+      
+      if(input$ClusterCheckMCL){ 
+        
+        if(tissue=="BM"){
+          palette<-c("#F79071","#994627")
+        }
+        else if(tissue=="PB"){
+          palette<-c("#3B3571", "#62C75F")
+        }
+        
+        pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
+        test<-test_distr_unified(pz_data,variable,paste0("Cluster_",tissue),palette)
+        plot<-test$plot+
+          labs(caption = paste("Shapiro test for normality: * = pvalue<0.05, ** = p-value<0.01 \n",
+                               "Kolmogorov-Smirnov test for equal distribution: ",round(test$kw_test$p.value,4),"\n",
+                               "T-test for equal means:",round(test$t_test$p.value,4),"\n",
+                               "Wilcoxon-Mann-Whitney test:",round(test$wilcox_test$p.value,4),"\n",
+                               "F-test for equal variances:",round(test$f_test$p.value,4),"\n",
+                               "Levene's test for equal variances:", round(test$levene_test$`Pr(>F)`[1],4),"\n")
+          )
+      }else{ 
+        if(tissue=="BM"){
+          palette<-c("#F1BB7B", "#FD6467", "#5B1A18", "#D67236")
+        }
+        else if(tissue=="PB"){
+          palette<-c("#440154", "#31688E", "#35B779", "#8FD744")
+        }
+        
+        test<-test_distribution(pz_data,variable,paste0("Cluster_",tissue),palette)
+        
+        if(is.null(test)){next}
+        plot<-test$plot
+        stat_test<-test[names(test)!="plot"]
+        null_stat_test<-sapply(stat_test,is.null)
+        labs<-c("Kruskal-Wallis test for equal medians: ",
+                "ANOVA test for equal means: ",
+                "Bartlett's for equal variances: ",
+                "Levene's test for equal variance: ")[!null_stat_test]
+        pvalues<-c(stat_test$kw_test$p.value,
+                   summary(test$anova_test)[[1]]$'Pr(>F)'[1],
+                   test$bartlett_test$p.value,
+                   test$levene_test$`Pr(>F)`[1])
+        caption<-paste(paste0(labs,round(pvalues,4),"\n"),collapse="")
+        
+        plot<-test$plot+
+          labs(caption = paste("Shapiro test for normality: * = pvalue<0.05, ** = p-value<0.01 \n",
+                               caption))
       }
     }
-    
-    test<-test_indipendence(pz_data,variable,paste0("Cluster_",tissue),palette)
-    
-    test$plot & (
-      theme(
-        legend.position = "bottom",
-        panel.background = element_rect(fill='transparent'),
-        plot.background = element_rect(fill='transparent', color=NA),
-        legend.background = element_rect(fill='transparent'),
-        legend.box.background = element_rect(fill='transparent')
-      ) +
-        axistheme 
-    )
-    
-  })
-  
-  output$MCL_quantClinicalPlot <- renderPlot({
-    req(MCLvalues$ClusterDF -> df)
-    input$tissueMCL -> tissue
-    input$quant_varsMCL -> variable
 
-    # input$ArmMCL -> arm
-    arm = "NULL"
-    if(arm == "NULL"){
-      pz_data = info_pz_MCL0208_connector
-    }else{
-      dftmp = df %>% select(-ID) %>% mutate( ID = paste0(IDold) )  %>% select(ID,Cluster) %>% distinct()
-      tmp = merge(info_pz_MCL0208_connector,dftmp)
-      pz_data = tmp %>% mutate(Cluster_BM = Cluster, Cluster_PB = Cluster) 
-    }
-    
-    
-    if(input$ClusterCheckMCL){ 
-      
-      if(tissue=="BM"){
-        palette<-c("#F79071","#994627")
-      }
-      else if(tissue=="PB"){
-        palette<-c("#3B3571", "#62C75F")
-      }
-      
-      pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
-      test<-test_distr_unified(pz_data,variable,paste0("Cluster_",tissue),palette)
-      plot<-test$plot+
-        labs(caption = paste("Shapiro test for normality: * = pvalue<0.05, ** = p-value<0.01 \n",
-                             "Kolmogorov-Smirnov test for equal distribution: ",round(test$kw_test$p.value,4),"\n",
-                             "T-test for equal means:",round(test$t_test$p.value,4),"\n",
-                             "Wilcoxon-Mann-Whitney test:",round(test$wilcox_test$p.value,4),"\n",
-                             "F-test for equal variances:",round(test$f_test$p.value,4),"\n",
-                             "Levene's test for equal variances:", round(test$levene_test$`Pr(>F)`[1],4),"\n")
-        )
-    }else{ 
-      if(tissue=="BM"){
-        palette<-c("#F1BB7B", "#FD6467", "#5B1A18", "#D67236")
-      }
-      else if(tissue=="PB"){
-        palette<-c("#440154", "#31688E", "#35B779", "#8FD744")
-      }
-      
-      test<-test_distribution(pz_data,variable,paste0("Cluster_",tissue),palette)
-      
-      if(is.null(test)){next}
-      plot<-test$plot
-      stat_test<-test[names(test)!="plot"]
-      null_stat_test<-sapply(stat_test,is.null)
-      labs<-c("Kruskal-Wallis test for equal medians: ",
-              "ANOVA test for equal means: ",
-              "Bartlett's for equal variances: ",
-              "Levene's test for equal variance: ")[!null_stat_test]
-      pvalues<-c(stat_test$kw_test$p.value,
-                 summary(test$anova_test)[[1]]$'Pr(>F)'[1],
-                 test$bartlett_test$p.value,
-                 test$levene_test$`Pr(>F)`[1])
-      caption<-paste(paste0(labs,round(pvalues,4),"\n"),collapse="")
-      
-      plot<-test$plot+
-        labs(caption = paste("Shapiro test for normality: * = pvalue<0.05, ** = p-value<0.01 \n",
-                             caption))
-    }
-    
-    plot & (theme(
-      legend.position = "bottom")+axistheme)
-    
+    return(plot)
   })
   
+
   observe({
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
@@ -678,7 +662,7 @@ server <- function(input, output, session) {
         labs(x = "Days", y = "") +
         scale_y_continuous(limits=c(-1, 8) ,
                            breaks = seq(0,8,2),
-                           labels = c("NEG","POS",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) ) +
+                           labels = c("NEG","PNQ",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) ) +
         theme_bw() +
         theme(legend.position = "top",
               plot.margin = unit(c(0, 0,0,0), "cm"))
@@ -828,7 +812,7 @@ server <- function(input, output, session) {
                  linetype = "dashed")+
       scale_y_continuous(limits=c(-1, 8) ,
                          breaks = seq(0,8,2),
-                         labels = c("NEG","POS",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) ) +
+                         labels = c("NEG","PNQ",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) ) +
       theme_bw() +
       theme(legend.position = "top",
             plot.margin = unit(c(0, 0,0,0), "cm"))
@@ -1027,7 +1011,7 @@ server <- function(input, output, session) {
         #     alpha = 0.2  
         #   ) 
         
-        ggsurvplot =  ggplot(data = ggsurv$plot$data, aes( x = CutTime+time))  +
+        ggsurvplot =  ggplot(data = ggsurv$plot$data, aes(x = CutTime+time) )  +
           #ggsurv$plot$layers[[3]] + 
           geom_step( data = ggsurv$plot$data, aes(x = CutTime+ time, y = surv,  color = strata),linewidth =1 ) +
           geom_point(data = ggsurv$plot$data[ggsurv$plot$data$n.censor > 0, , drop = FALSE],

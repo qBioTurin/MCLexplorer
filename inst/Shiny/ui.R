@@ -17,9 +17,36 @@ library(car)
 library(cowplot)
 library(DT)
 
-qual_vars<-c("PFS","OS","TTP","TP53_loss_or_mut","TP53","TP53_loss_array","TP53_disruption","Ki67_Classes","BM_INFILTRATION","HIGH_LDH\n","PS_ECOG","HISTOLOGY","AA_STAGE","MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)","Ki67_Classes_1","MIPI_Classes","CLINICAL_SIT_PRE_ASCT","CLINICAL_SIT_postASCT")
-quant_var<-c("flow_at_dia","Age","flow PB","flow BM","%_BM_INFILTR\n","MIPI","HB_LEVEL\n","NEUTRO_COUNT","LYMPHO_COUNT","PLTS","KI_67")
-pharmagen_muts<-c("ABCB1 1236 C>T","ABCB1 2677 G>T,A","ABCB1 2677 G>T,A _2","ABCB1 3435 C,T","Aplotype ABCB1","VEGFA -2055 A>C","VEGFA -2055 A>C _2","ABCG2 421 C>A","FCGR2A 497 A>G","NCF4 -368 G>A","GSTP1 313 A>G","CRBN_1_rs1714327","CRBN_2_rs1705814") 
+qual_vars<-c("Progression-free survival (PFS)" = "PFS","Overall Survival (OS)" = "OS","time to progression (TTP)" = "TTP",
+             "TP53_loss_or_mut",
+             "TP53" = "TP53", "TP53_delation" = "TP53_loss_array",
+             "TP53 disruption" = "TP53_disruption",
+             "Ki67_Classes (0 = .. ; 1 = ...; 2 = ....)" = "Ki67_Classes",
+             "Morphologic BM infiltration" = "BM_INFILTRATION","
+             HIGH LDH" = "HIGH_LDH\n",
+             "ECOG" = "PS_ECOG","HISTOLOGY" = "HISTOLOGY","STAGE" = "AA_STAGE",
+             "MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)" = "MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)",
+             "Ki67_Classes_1 (0 = .. ; 1 = ...)" = "Ki67_Classes_1","MIPI Classes" = "MIPI_Classes",
+             "Clinical response pre ASCT" = "CLINICAL_SIT_PRE_ASCT",
+             "Clinical response post ASCT" = "CLINICAL_SIT_postASCT")
+quant_vars<-c("Age" = "Age","Flow PB" = "flow PB","Flow BM" = "flow BM",
+             "% Morphologic infiltration in BM" = "%_BM_INFILTR\n","MIPI" = "MIPI",
+             "HB at the diagnosis" = "HB_LEVEL\n",
+             "Neutrophils Counts at the diagnosis" = "NEUTRO_COUNT",
+             "Lymphocytes Counts at the diagnosis" = "LYMPHO_COUNT", "Platelets" = "PLTS",
+             "% KI_67" = "KI_67")
+
+vars_values = c(qual_vars,quant_vars)
+
+# check TP53_loss_or_mut TP53_disruption sono uguali? si, togliere TP53_loss_or_mut
+# TP53_disruption = TP53 + TP53_loss_array (TP53_delation)
+# Ki67_Classes_1 -> fare come marker
+# MIPI_C -> calcolare dalla referenza
+
+pharmagen_muts<-c("ABCB1 1236 C>T","ABCB1 2677 G>T,A","ABCB1 2677 G>T,A _2","ABCB1 3435 C,T",
+                  "Aplotype ABCB1","VEGFA -2055 A>C","VEGFA -2055 A>C _2",
+                  "ABCG2 421 C>A","FCGR2A 497 A>G","NCF4 -368 G>A","GSTP1 313 A>G",
+                  "CRBN_1_rs1714327","CRBN_2_rs1705814") 
 
 
 ui <- dashboardPage(
@@ -220,29 +247,29 @@ ui <- dashboardPage(
                                                          checkboxInput("ClusterCheckMCL",label = "Unify the CONNECTOR clusters.")
                                                   )
                                                 ),
-                                                box(title = h2("Qualitative Analysis"),width = 12,collapsible = T,collapsed = T,
+                                                box(title = h2("Statistical Analysis"),width = 12,collapsible = T,collapsed = T,
+                                                    status = "primary",solidHeader = T,
                                                     fluidRow(
                                                       column(6,
-                                                             conditionalPanel(condition = "input.ClusterCheckMCL",
-                                                                              selectInput(inputId = "qual_varsMCL",
-                                                                                          label = "Variables:",
-                                                                                          choices = c("MIPI",qual_vars),
-                                                                                          selected = "PFS")
-                                                             ),
+                                                             # conditionalPanel(condition = "input.ClusterCheckMCL",
+                                                             #                  selectInput(inputId = "qual_varsMCL",
+                                                             #                              label = "Variables:",
+                                                             #                              choices = c("MIPI",vars_values) )
+                                                             # ),
                                                              conditionalPanel(condition = "!input.ClusterCheckMCL",
-                                                                              selectInput(inputId = "qual_varsMCL",
+                                                                              selectInput(inputId = "varsMCL",
                                                                                           label = "Variables:",
-                                                                                          choices = qual_vars,
-                                                                                          selected = "PFS")
+                                                                                          choices = vars_values)
                                                              )
                                                       )
                                                     ),
                                                     fluidRow(
-                                                      column(12, plotOutput("MCL_qualClinicalPlot",height = "400px"))
+                                                      column(12, plotOutput("MCL_ClinicalPlot",height = "400px"))
                                                     )
                                                 ),
                                                 box(title = h2("Qualitative Analysis - Gene Mutations"),width = 12,
                                                     collapsible = T,collapsed = T,
+                                                    status = "primary",#solidHeader = T,
                                                     fluidRow(
                                                       # column(3,
                                                       #        selectInput(inputId = "cond_typeMCL",
@@ -259,20 +286,9 @@ ui <- dashboardPage(
                                                       column(12, plotOutput("MCL_MutationPlot",height = "400px"))
                                                     )
                                                 ),
-                                                box(title = h2("Qualitative Analysis"),width = 12,
-                                                    collapsible = T,collapsed = T,
-                                                    fluidRow(
-                                                      selectInput(inputId = "quant_varsMCL",
-                                                                  label = "Variables:",
-                                                                  choices = quant_var,
-                                                                  selected = "flow_at_dia")
-                                                    ),
-                                                    fluidRow(
-                                                      column(12, plotOutput("MCL_quantClinicalPlot",height = "400px"))
-                                                    )
-                                                ),
                                                 box(title = h2("Pharmacogenomic Analysis"),width = 12,
                                                     collapsible = T,collapsed = T,
+                                                    status = "primary",solidHeader = T,
                                                     fluidRow(
                                                       selectInput(inputId = "pharma_varsMCL",
                                                                   label = "Variables:",
