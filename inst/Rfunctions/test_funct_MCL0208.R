@@ -5,10 +5,13 @@ test_indipendence<-function(info_tibble,variable_1,variable_2,palette){
   else{
     df<-as.data.frame(table)
     colnames(df)<-c("Var1","Var2","Count")
-    mosaicplot<-ggplot(data = df) +
-      geom_mosaic(aes(weight = Count, x = product(Var2), fill = Var1),alpha=1)+
+    mosaicplot<-
+      ggplot(data = df) +
+      geom_bar(aes(x = Var2, y = Count, fill = Var1), stat = "identity", position="dodge" )+
+      #geom_mosaic(aes(weight = Count, x = product(Var2), fill = Var1),alpha=1)+
       xlab(variable_1)+
-      ylab(variable_2)+
+      #ylab(variable_2)+
+      ylab("Counts")+
       scale_fill_manual(values=palette)+
       scale_color_manual(values=palette)+
       guides(fill=guide_legend(title=variable_2),
@@ -101,13 +104,19 @@ test_distribution<-function(info_tibble,variable_1,variable_2,palette){
   anova_test_results <- aov(variable_1 ~ variable_2, data = df)
   
   boxplot<-ggplot() +
-    geom_boxplot(data = df,
+    geom_violin(data = df,
                  aes(x=variable_2,
                      y=variable_1,
                      fill=variable_2,
                      color=variable_2,
                      group=variable_2),
                  alpha=0.5)+
+    geom_jitter(data = df, height = 0,
+                aes(x=variable_2,
+                    y=variable_1,
+                    color=variable_2,
+                    group=variable_2),
+                alpha=0.5)+
     ylab(variable_1)+
     scale_fill_manual(values=palette)+
     scale_color_manual(values=palette)+
@@ -161,13 +170,19 @@ test_distr_unified<-function(info_tibble,variable_1,variable_2,palette){
   df_count<-count(df,variable_2)
   
   boxplot<-ggplot() +
-    geom_boxplot(data = df,
+    geom_violin(data = df,
                  aes(x=variable_2,
                      y=variable_1,
                      fill=variable_2,
                      color=variable_2,
                      group=variable_2),
                  alpha=0.5)+
+    geom_jitter(data = df, height = 0,
+                aes(x=variable_2,
+                    y=variable_1,
+                    color=variable_2,
+                    group=variable_2),
+                alpha=0.5)+
     ylab(variable_1)+
     scale_fill_manual(values=palette)+
     scale_color_manual(values=palette)

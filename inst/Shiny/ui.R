@@ -17,24 +17,25 @@ library(car)
 library(cowplot)
 library(DT)
 
-qual_vars<-c("Progression-free survival (PFS)" = "PFS","Overall Survival (OS)" = "OS","time to progression (TTP)" = "TTP",
-             "TP53_loss_or_mut",
-             "TP53" = "TP53", "TP53_delation" = "TP53_loss_array",
+qual_vars<-c("Progression-free survival (PFS)" = "PFS",
+             "Overall Survival (OS)" = "OS","time to progression (TTP)" = "TTP",
+             #"TP53_loss_or_mut",
+             "TP53" = "TP53", "TP53 delation" = "TP53_loss_array",
              "TP53 disruption" = "TP53_disruption",
-             "Ki67_Classes (0 = .. ; 1 = ...; 2 = ....)" = "Ki67_Classes",
+             "Ki67 Classes (0 = .. ; 1 = ...)" = "Ki67_Classes",
              "Morphologic BM infiltration" = "BM_INFILTRATION","
              HIGH LDH" = "HIGH_LDH\n",
              "ECOG" = "PS_ECOG","HISTOLOGY" = "HISTOLOGY","STAGE" = "AA_STAGE",
              "MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)" = "MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)",
-             "Ki67_Classes_1 (0 = .. ; 1 = ...)" = "Ki67_Classes_1","MIPI Classes" = "MIPI_Classes",
+             "Ki67 Classes_1 (0 = .. ; 1 = ...)" = "Ki67_Classes_1","MIPI Classes" = "MIPI_Classes",
              "Clinical response pre ASCT" = "CLINICAL_SIT_PRE_ASCT",
              "Clinical response post ASCT" = "CLINICAL_SIT_postASCT")
 quant_vars<-c("Age" = "Age","Flow PB" = "flow PB","Flow BM" = "flow BM",
-             "% Morphologic infiltration in BM" = "%_BM_INFILTR\n","MIPI" = "MIPI",
-             "HB at the diagnosis" = "HB_LEVEL\n",
-             "Neutrophils Counts at the diagnosis" = "NEUTRO_COUNT",
-             "Lymphocytes Counts at the diagnosis" = "LYMPHO_COUNT", "Platelets" = "PLTS",
-             "% KI_67" = "KI_67")
+              "% Morphologic infiltration in BM" = "%_BM_INFILTR\n","MIPI" = "MIPI",
+              "HB at the diagnosis" = "HB_LEVEL\n",
+              "Neutrophils Counts at the diagnosis" = "NEUTRO_COUNT",
+              "Lymphocytes Counts at the diagnosis" = "LYMPHO_COUNT", "Platelets" = "PLTS",
+              "% KI_67" = "KI_67")
 
 vars_values = c(qual_vars,quant_vars)
 
@@ -116,15 +117,15 @@ ui <- dashboardPage(
                        h1("Welcome to the MCL MRD Connector Cluster Analysis App", style = "color:#1d8fbd; font-weight:bold;"),
                        br(),
                        
-                       p(img(src = "MCLlogo.png", height = "30%", width = "30%"), align = "center"),
+                       p(img(src = "MCLlogo.png", height = "20%", width = "20%"), align = "center"),
                        # Brief description
                        p("This application is designed to aid researchers in inspecting and classifying CONNECTOR clusters for Minimal Residual Disease in Mantle Cell Lymphoma.",
-                         style = "font-size:18px; color: #333333;"),
+                         style = "font-size:20px; color: #333333;"),
                        br(),
                        
                        # Application features
                        div(
-                         style = "font-size:16px; color:#666666; padding:10px; text-align:left;",
+                         style = "font-size:18px; color:#666666; padding:10px; text-align:left;",
                          tags$ul(
                            tags$li(strong("Clustering Exploration:"), " Visualize and explore the MCL0208 dataset, which contains key information about connector clusters."),
                            tags$li(strong("Clasification Exploration:"), " Classify data from the Young dataset based on clusters identified in the MCL0208 analysis."),
@@ -142,14 +143,17 @@ ui <- dashboardPage(
                        #        h4(" Fondazione Italiana Linfomi (FIL) MCL0208 Clinical Trial")
                        # )
                 ),
+                p(img(src = "Framework.png", height = "40%", width = "80%", style = "margin:20px 0px"), align = "center"),
                 p(img(src = "Logo_QBio.png", height = "15%", width = "15%", style = "margin:20px 0px"), align = "center"),
-                p(img(src = "loghi.png", height = "60%", width = "100%", style = "margin:20px 0px"), align = "center"),
+                p(img(src = "loghi.png", height = "40%", width = "90%", style = "margin:20px 0px"), align = "center"),
                 column(12, align = "center",
                        hr(),
                        div(
                          style = "font-size:14px; color: #666666;",
                          HTML("For more information on the connector methodology, please refer to:"),
-                         HTML("Simone Pernice, et al. 'CONNECTOR, fitting and clustering of longitudinal data to reveal a new risk stratification system', Bioinformatics (2023).")
+                         tags$a(href = "https://academic.oup.com/bioinformatics/article/39/5/btad201/7133735?login=true",
+                                HTML("Simone Pernice, et al. 'CONNECTOR, fitting and clustering of longitudinal data to reveal a new risk stratification system', Bioinformatics (2023).")
+                         )
                        ),
                        br(),
                        tags$a(
@@ -184,7 +188,72 @@ ui <- dashboardPage(
                            tabsetPanel(id = "panelsMCL",
                                        tabPanel("Clustering", value = "panel_Plot",
                                                 fluidRow(
+                                                  column(3,
+                                                         checkboxInput("ClusterCheckMCLdynamics",
+                                                                       label = "Unify the CONNECTOR clusters.",value = T)
+                                                  )
+                                                ),
+                                                fluidRow(
                                                   column(12, plotOutput("MCL_clusteringPlot",height = "800px"))
+                                                )
+                                       ),
+                                       tabPanel("Clinical assestment", value = "panel_Clinical",
+                                                fluidRow(
+                                                  column(3,
+                                                         checkboxInput("ClusterCheckMCL",label = "Unify the CONNECTOR clusters.",value = T)
+                                                  )
+                                                ),
+                                                box(title = h2("Statistical Analysis"),width = 12,collapsible = T,collapsed = T,
+                                                    status = "primary",
+                                                    fluidRow(
+                                                      column(6,
+                                                             # conditionalPanel(condition = "input.ClusterCheckMCL",
+                                                             #                  selectInput(inputId = "qual_varsMCL",
+                                                             #                              label = "Variables:",
+                                                             #                              choices = c("MIPI",vars_values) )
+                                                             # ),
+                                                             #conditionalPanel(condition = "!input.ClusterCheckMCL",
+                                                             selectInput(inputId = "varsMCL",
+                                                                         label = "Variables:",
+                                                                         choices = vars_values)
+                                                             # )
+                                                      )
+                                                    ),
+                                                    fluidRow(
+                                                      column(12, plotOutput("MCL_ClinicalPlot",height = "400px"))
+                                                    )
+                                                ),
+                                                box(title = h2("Qualitative Analysis - Gene Mutations"),width = 12,
+                                                    collapsible = T,collapsed = T,
+                                                    status = "primary",
+                                                    fluidRow(
+                                                      # column(3,
+                                                      #        selectInput(inputId = "cond_typeMCL",
+                                                      #                    label = "Types:",
+                                                      #                    choices = c("CHIP panel - anyTimeAndTissue","CHIP panel - DIAGNOSIS","CHIP panel - anyTimeAndTissue","CHIP panel - lost","CHIP panel - gained","MCL panel"),
+                                                      #                    selected = "All_anyTimeAndTissue")
+                                                      # ),
+                                                      column(3,
+                                                             selectInput(inputId = "var_typeMCL",
+                                                                         label = "Variables:",choices = "")
+                                                      )
+                                                    ),
+                                                    fluidRow(
+                                                      column(12, plotOutput("MCL_MutationPlot",height = "400px"))
+                                                    )
+                                                ),
+                                                box(title = h2("Pharmacogenomic Analysis"),width = 12,
+                                                    collapsible = T,collapsed = T,
+                                                    status = "primary",
+                                                    fluidRow(
+                                                      selectInput(inputId = "pharma_varsMCL",
+                                                                  label = "Variables:",
+                                                                  choices = pharmagen_muts,
+                                                                  selected = "ABCB1 1236 C>T")
+                                                    ),
+                                                    fluidRow(
+                                                      column(12, plotOutput("MCL_pharmaPlot",height = "400px"))
+                                                    )
                                                 )
                                        ),
                                        tabPanel("Survival analysis",value = "panel_survMCL",
@@ -241,65 +310,6 @@ ui <- dashboardPage(
                                                   )
                                                 )
                                        ),
-                                       tabPanel("Clinical assestment", value = "panel_Clinical",
-                                                fluidRow(
-                                                  column(3,
-                                                         checkboxInput("ClusterCheckMCL",label = "Unify the CONNECTOR clusters.")
-                                                  )
-                                                ),
-                                                box(title = h2("Statistical Analysis"),width = 12,collapsible = T,collapsed = T,
-                                                    status = "primary",solidHeader = T,
-                                                    fluidRow(
-                                                      column(6,
-                                                             # conditionalPanel(condition = "input.ClusterCheckMCL",
-                                                             #                  selectInput(inputId = "qual_varsMCL",
-                                                             #                              label = "Variables:",
-                                                             #                              choices = c("MIPI",vars_values) )
-                                                             # ),
-                                                             conditionalPanel(condition = "!input.ClusterCheckMCL",
-                                                                              selectInput(inputId = "varsMCL",
-                                                                                          label = "Variables:",
-                                                                                          choices = vars_values)
-                                                             )
-                                                      )
-                                                    ),
-                                                    fluidRow(
-                                                      column(12, plotOutput("MCL_ClinicalPlot",height = "400px"))
-                                                    )
-                                                ),
-                                                box(title = h2("Qualitative Analysis - Gene Mutations"),width = 12,
-                                                    collapsible = T,collapsed = T,
-                                                    status = "primary",#solidHeader = T,
-                                                    fluidRow(
-                                                      # column(3,
-                                                      #        selectInput(inputId = "cond_typeMCL",
-                                                      #                    label = "Types:",
-                                                      #                    choices = c("CHIP panel - anyTimeAndTissue","CHIP panel - DIAGNOSIS","CHIP panel - anyTimeAndTissue","CHIP panel - lost","CHIP panel - gained","MCL panel"),
-                                                      #                    selected = "All_anyTimeAndTissue")
-                                                      # ),
-                                                      column(3,
-                                                             selectInput(inputId = "var_typeMCL",
-                                                                         label = "Variables:",choices = "")
-                                                      )
-                                                    ),
-                                                    fluidRow(
-                                                      column(12, plotOutput("MCL_MutationPlot",height = "400px"))
-                                                    )
-                                                ),
-                                                box(title = h2("Pharmacogenomic Analysis"),width = 12,
-                                                    collapsible = T,collapsed = T,
-                                                    status = "primary",solidHeader = T,
-                                                    fluidRow(
-                                                      selectInput(inputId = "pharma_varsMCL",
-                                                                  label = "Variables:",
-                                                                  choices = pharmagen_muts,
-                                                                  selected = "ABCB1 1236 C>T")
-                                                    ),
-                                                    fluidRow(
-                                                      column(12, plotOutput("MCL_pharmaPlot",height = "400px"))
-                                                    )
-                                                )
-                                       ),
                                        tabPanel("Table", value = "panel_table",
                                                 fluidRow(
                                                   DT::DTOutput("DTtableMCL")
@@ -323,68 +333,68 @@ ui <- dashboardPage(
               ),
               box(width = 12,
                   title = "Classification Analysis", status = "primary", solidHeader = TRUE,
-                  column(4,
-                         fluidRow(
-                           column(width = 6,
-                                  conditionalPanel(condition="input.YoungPanels == 'panel_YoungPlot'", 
-                                                   sliderInput(inputId = "Cut",
-                                                               label = "Truncate the curves at",
-                                                               min = 0, max = 1, value = 0),
-                                                   actionButton(inputId = "GoClass", label = "Start Classification\n and Landmark "),
-                                                   h2("")
-                                  ),
-                                  selectInput(inputId = "youngMCLselectColor",
-                                              label = "Color by:",
-                                              choices = c("None", "TTP","Random","INIERG"),
-                                              #choices = c("None", "ttpevent","rnd1","INIERG"), 
-                                              selected = "None" )
-                                  #selectInput(inputId = "youngMCLselectColor", label = "Color by:", choices = c("None") )
+                  fluidRow(
+                    column(width = 6,
+                           conditionalPanel(condition="input.YoungPanels == 'panel_YoungPlot'", 
+                                            sliderInput(inputId = "Cut",
+                                                        label = "Truncate the curves at day:",
+                                                        min = 0, max = 1, value = 0),
+                                            actionButton(inputId = "GoClass", label = "Start Classification\n and Landmark "),
+                                            h2("")
                            ),
-                           column(width = 12,
-                                  conditionalPanel(condition="input.YoungPanels == 'panel_YmclSurv'", 
-                                                   verbatimTextOutput("YmclSummary")
-                                  ),
-                                  conditionalPanel(condition="input.YoungPanels == 'panel_YoungPlot'", 
-                                                   verbatimTextOutput("truncationSummary")
-                                  )
+                           selectInput(inputId = "youngMCLselectColor",
+                                       label = "Color by:",
+                                       choices = c("None" = "None", "Time To Progression" = "TTP", "Random" = "Random","INIERG" = "INIERG"),
+                                       #choices = c("None", "ttpevent","rnd1","INIERG"), 
+                                       selected = "None" )
+                           #selectInput(inputId = "youngMCLselectColor", label = "Color by:", choices = c("None") )
+                    ),
+                    column(width = 6,
+                           conditionalPanel(condition="input.YoungPanels == 'panel_YmclSurv'", 
+                                            verbatimTextOutput("YmclSummary")
+                           ),
+                           conditionalPanel(condition="input.YoungPanels == 'panel_YoungPlot'", 
+                                            verbatimTextOutput("truncationSummary")
                            )
-                         )
+                    )
                   ),
-                  column(8,
-                         tabsetPanel(id = "YoungPanels",
-                                     tabPanel("Classification and Survival analysis", value = "panel_YmclSurv",
-                                              fluidRow(
-                                                column(12, plotOutput("classYoungPlot",height = "800px")),
-                                                column(12, plotOutput("survYoungPlot"))
-                                              )
-                                     ),
-                                     tabPanel("Data processing", value = "panel_YoungPlot",
-                                              fluidRow(
-                                                column(12, plotOutput("linePlot")),
-                                                column(12, plotOutput("lineTruncPlot"))
-                                              )
-                                     ),
-                                     tabPanel("Classification & Landmark analysis",value = "panel_Classification",
-                                              fluidRow(
-                                                column(12, 
-                                                       plotOutput("classifiedCurve")
+                  fluidRow( 
+                    column(10,offset = 1,
+                           tabsetPanel(id = "YoungPanels",
+                                       tabPanel("Classification and Survival analysis", value = "panel_YmclSurv",
+                                                fluidRow(
+                                                  column(12, plotOutput("classYoungPlot", height = "800px")),
+                                                  column(12, plotOutput("survYoungPlot"))
                                                 )
-                                              ),
-                                              fluidRow(
-                                                column(2,offset = 9, 
-                                                       actionButton(inputId="saveLP_fromClass",
-                                                                    label = "Save Landmark Point")
+                                       ),
+                                       tabPanel("Data processing", value = "panel_YoungPlot",
+                                                fluidRow(
+                                                  column(12, plotOutput("linePlot")),
+                                                  column(12, plotOutput("lineTruncPlot"))
                                                 )
-                                              )
-                                     ),
-                                     tabPanel("Saved Landmark results",value = "panel_Summary",
-                                              fluidRow(
-                                                column(12,
-                                                       uiOutput("landmarkPoints")
+                                       ),
+                                       tabPanel("Classification & Landmark analysis",value = "panel_Classification",
+                                                fluidRow(
+                                                  column(12, 
+                                                         plotOutput("classifiedCurve",height = "800px")
+                                                  )
+                                                ),
+                                                fluidRow(
+                                                  column(2,offset = 9, 
+                                                         actionButton(inputId="saveLP_fromClass",
+                                                                      label = "Save Landmark Point")
+                                                  )
                                                 )
-                                              )
-                                     )
-                         )
+                                       ),
+                                       tabPanel("Saved Landmark results",value = "panel_Summary",
+                                                fluidRow(
+                                                  column(12,
+                                                         uiOutput("landmarkPoints")
+                                                  )
+                                                )
+                                       )
+                           )
+                    )
                   )
               )
       ),

@@ -35,14 +35,17 @@ plot.genaration = function(df,col){
     geom_line(aes(col=as.factor(TTP))) +
     facet_wrap(~Cluster,ncol = 1) +
     scale_color_manual(values = c("0" = "blue","1"="red"))+
-    labs(x = "", y = "") +
+    labs(x = "Months", y = "") +
     scale_y_continuous(limits=c(-1, 8) ,
                        breaks = seq(0,8,2),
                        labels = c("NEG","POS",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) ) +
     theme_bw() +
     theme(legend.position = "none",
           strip.text = element_text(face="bold",color = "white"),
-          plot.margin = unit(c(0, 0,0,0), "cm"))
+          plot.margin = unit(c(0, 0,0,0), "cm"))+ 
+    scale_x_continuous(breaks = seq(0, max(df$Time), 60),
+                       labels = seq(0, max(df$Time), 60) / 30)
+  
   pl = pl1/DisTimeBX + plot_layout(heights = c(4,0.5))
   g = patchworkGrob(pl)
   ### tables
@@ -60,17 +63,31 @@ plot.genaration = function(df,col){
                c(1,1,1,4),
                c(1,1,1,5),
                c(1,1,1,NA))
-  g = gridExtra::grid.arrange(
-    g ,
-    gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="A") %>% select(-Cluster),
-                         rows=NULL,theme = ttheme),
-    gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="B") %>% select(-Cluster),
-                         rows=NULL,theme = ttheme),
-    gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="C") %>% select(-Cluster),
-                         rows=NULL,theme = ttheme),
-    gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="D") %>% select(-Cluster),
-                         rows=NULL,theme = ttheme), layout_matrix = lay
-  )
+  if(length(unique(CountsTTP$Cluster)) == 4){
+    g = gridExtra::grid.arrange(
+      g ,
+      gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="A") %>% select(-Cluster),
+                           rows=NULL,theme = ttheme),
+      gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="B") %>% select(-Cluster),
+                           rows=NULL,theme = ttheme),
+      gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="C") %>% select(-Cluster),
+                           rows=NULL,theme = ttheme),
+      gridExtra::tableGrob(CountsTTP %>% filter(Cluster=="D") %>% select(-Cluster),
+                           rows=NULL,theme = ttheme), layout_matrix = lay
+    )
+  }else if(length(unique(CountsTTP$Cluster)) == 2){
+    unique(CountsTTP$Cluster) -> clusters
+    g = gridExtra::grid.arrange(
+      g ,
+      gridExtra::tableGrob(CountsTTP %>% filter(Cluster==clusters[1]) %>% select(-Cluster),
+                           rows=NULL,theme = ttheme),
+      gridExtra::tableGrob(CountsTTP %>% filter(Cluster==clusters[2]) %>% select(-Cluster),
+                           rows=NULL,theme = ttheme), layout_matrix = lay
+    )
+  }else{
+    return("Error, number of clusters does not match!")
+  }
+
   ##### Change color
   #g <- ggplot_gtable(ggplot_build(pl))
   #g$layout$name

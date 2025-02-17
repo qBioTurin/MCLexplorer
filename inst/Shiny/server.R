@@ -96,9 +96,9 @@ server <- function(input, output, session) {
       MCLvalues$meancurves = meancurves
       
       maxL = max(df1$L)
-      maxE = max(df1$Entropy)
+      maxE = signif(max(df1$Entropy),digits = 3)
       minL = min(df1$L)
-      minE = min(df1$Entropy)
+      minE = floor(min(df1$Entropy))
       
       updateSliderInput(session = session, inputId = "entropy", min = minE, max = maxE, value = c(minE,maxE) )
       updateSliderInput(session = session, inputId =  "length", min = minL, max = maxL, value = c(minL,maxL) )
@@ -115,6 +115,14 @@ server <- function(input, output, session) {
     completeDF = merge(df,Dataset%>%select(-Cluster), by = "ID")
     Tissuecol = ColorCluster[grep(pattern = paste0(tissueMCL,"_"), names(ColorCluster))]
     names(Tissuecol) = gsub(pattern = paste0(tissueMCL,"_"),replacement = "",names(Tissuecol))
+    
+    if(input$ClusterCheckMCLdynamics){
+      Tissuecol = c("#00204DFF", "#40498EFF")
+      names(Tissuecol) = c("Favorable MRD kinetics\n (A-B)", "Unfavorable MRD kinetics\n (C-D)")
+      completeDF$Cluster =  ifelse( completeDF$Cluster %in% c("A","B"),
+                                    "Favorable MRD kinetics\n (A-B)", "Unfavorable MRD kinetics\n (C-D)")
+    }
+    
     PlotComplete = plot.genaration(completeDF,Tissuecol)
     grid.draw(PlotComplete)
   })
@@ -167,7 +175,7 @@ server <- function(input, output, session) {
       }else if(selectSurvMCL == "Clusters"){
         fit <- eval(parse(text = paste0("survfit(Surv(Dataset$TimeTTPevent,Dataset$TTP) ~ Cluster, data = Dataset)")))
       }else if(selectSurvMCL == "Merging Clusters"){
-        Dataset = Dataset %>% mutate(Cluster2 = ifelse(Cluster %in% c("A","B"), "A-B", "C-D"))
+        Dataset = Dataset %>% mutate(Cluster2 = ifelse(Cluster %in% c("A","B"), "Favorable MRD kinetics\n (A-B)", "Unfavorable MRD kinetics\n (C-D)"))
         if( length(unique(Dataset$Cluster)) > 4 ) 
           Dataset = Dataset %>% 
             mutate(Cluster2 = ifelse(Cluster2 != "A-B", paste0(LETTERS[3:length(unique(Dataset$Cluster))],collapse = "-") ))
@@ -186,7 +194,19 @@ server <- function(input, output, session) {
         annotate("text", x = surv_median_values$median, y = 0,
                  label = round(surv_median_values$median,digits = 3), size = 3, hjust = 0)
       
-      ggsurv$plot/ggsurv$table -> pl
+      ggsurv$plot <- ggsurv$plot +
+        labs(y = "Survival Probability", x = "Years") + 
+        scale_x_continuous(breaks = seq(0, max(ggsurv$table$data$time), 24),
+                           labels = seq(0, max(ggsurv$table$data$time), 24) / 24)
+      
+      ggsurv$table <- ggsurv$table +
+        labs(y = "", x = "Years") + 
+        scale_x_continuous(breaks = seq(0, max(ggsurv$table$data$time), 24),
+                           labels = seq(0, max(ggsurv$table$data$time), 24) / 24)+ 
+        theme(legend.position = "none")
+      
+     pl =  ggsurv$plot / ggsurv$table + plot_layout(heights = c(3, 1))
+
     }
     
     pl
@@ -195,7 +215,7 @@ server <- function(input, output, session) {
   output$MCL_survUIPlot <- renderUI({
     selectSurvMCL = input$selectSurvMCL
     if(selectSurvMCL == "Arm - single cluster") plot_height = "800px"
-    else plot_height = "400px"
+    else plot_height = "600px"
     
     plotOutput("MCL_survPlot", height = plot_height)
   })
@@ -258,7 +278,13 @@ server <- function(input, output, session) {
           theme_bw() +
           labs(col = "Entropy") +
           theme(legend.position = "none")+
-          scale_color_continuous(low = "grey",high = "#53190b")
+          scale_color_continuous(low = "grey",high = "#53190b")+ 
+          scale_x_continuous(breaks = seq(0, max(df_sub$Time), 90),
+                             labels = seq(0, max(df_sub$Time), 90) / 30)+
+          labs(x = "Months", y = "") +
+          scale_y_continuous(limits=c(-1, 8) ,
+                             breaks = seq(0,8,2),
+                             labels = c("NEG","POS",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) )
         
       }else{
         plot = ggplot()
@@ -269,8 +295,18 @@ server <- function(input, output, session) {
   })
   
   output$MCL_FittedCurve <- renderPlot({
+    req(input$SplineID != "")
     ID <- input$SplineID
-    MCLvalues$splinePlots[[ID]]
+    grid = MCLvalues$splinePlots[[ID]]$plot_env$data.ggplot$grid
+    low = min(MCLvalues$splinePlots[[ID]]$plot_env$data.ggplot$lowci,na.rm = T)
+    hig = max(MCLvalues$splinePlots[[ID]]$plot_env$data.ggplot$uppi,na.rm = T)
+    MCLvalues$splinePlots[[ID]]+ 
+      scale_x_continuous(breaks = seq(0,max(grid),60),
+                         labels = seq(0,max(grid),60) / 30)+
+      labs(x = "Months", y = "") +
+      scale_y_continuous(limits=c(min(-1,low), max(hig,8) ) ,
+                         breaks = seq(0,8,2),
+                         labels = c("NEG","POS",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) )
   })
   
   
@@ -296,14 +332,12 @@ server <- function(input, output, session) {
       mutate(ID = as.factor(ID),
              Cluster = as.factor(Cluster))
     
-    DT::datatable(pz_data, filter = 'top',
-                  options = list(
-                    pageLength = 5, autoWidth = TRUE,scrollX = TRUE
-                  )
+    DT::datatable(pz_data[,c("ID", "Cluster", vars_values)], filter = 'top',
+                  options = list( autoWidth = TRUE,scrollX = TRUE,scollY = TRUE, paging = F )
     )
     
   })
-
+  
   output$MCL_ClinicalPlot <- renderPlot({
     req(MCLvalues$ClusterDF -> df)
     input$ClusterCheckMCL
@@ -322,7 +356,8 @@ server <- function(input, output, session) {
     
     if(variable %in% qual_vars){
       if(input$ClusterCheckMCL){
-        pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
+        pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),
+                                                      "Favorable MRD kinetics\n (A-B)", "Unfavorable MRD kinetics\n (C-D)")
         if(tissue=="BM"){
           palette<-c("#F1BB7B", "#FD6467", "#5B1A18", "#D67236")
         }
@@ -338,7 +373,7 @@ server <- function(input, output, session) {
         }
       }
       
-      test<-test_indipendence(pz_data,variable,paste0("Cluster_",tissue),palette)
+      test<-test_indipendence(pz_data,variable_1 = variable,variable_2 = paste0("Cluster_",tissue),palette = palette)
       
       plot<- test$plot & (
         theme(
@@ -361,7 +396,8 @@ server <- function(input, output, session) {
           palette<-c("#3B3571", "#62C75F")
         }
         
-        pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
+        pz_data[,paste0("Cluster_",tissue)]<- ifelse( pz_data[[paste0("Cluster_",tissue)]] %in% c("A","B"),
+                                                      "Favorable MRD kinetics\n (A-B)", "Unfavorable MRD kinetics\n (C-D)")
         test<-test_distr_unified(pz_data,variable,paste0("Cluster_",tissue),palette)
         plot<-test$plot+
           labs(caption = paste("Shapiro test for normality: * = pvalue<0.05, ** = p-value<0.01 \n",
@@ -400,11 +436,10 @@ server <- function(input, output, session) {
                                caption))
       }
     }
-
+    
     return(plot)
   })
   
-
   observe({
     req(MCLvalues$ClusterDF -> df)
     input$tissueMCL -> tissue
@@ -509,7 +544,8 @@ server <- function(input, output, session) {
       else if(tissue=="PB"){
         palette<-c("#3B3571", "#62C75F")
       }
-      info_tmp[,paste0("Cluster_",tissue)]<- ifelse( info_tmp[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
+      info_tmp[,paste0("Cluster_",tissue)]<- ifelse( info_tmp[[paste0("Cluster_",tissue)]] %in% c("A","B"),
+                                                     "Favorable MRD kinetics\n (A-B)", "Unfavorable MRD kinetics\n (C-D)")
     }
     else{
       if(tissue=="BM"){
@@ -544,7 +580,8 @@ server <- function(input, output, session) {
       else if(tissue=="PB"){
         palette<-c("#3B3571", "#62C75F")
       }
-      info_tmp[,paste0("Cluster_",tissue)]<- ifelse( info_tmp[[paste0("Cluster_",tissue)]] %in% c("A","B"),"A/B","C/D")
+      info_tmp[,paste0("Cluster_",tissue)]<- ifelse( info_tmp[[paste0("Cluster_",tissue)]] %in% c("A","B"),
+                                                     "Favorable MRD kinetics\n (A-B)", "Unfavorable MRD kinetics\n (C-D)")
     }
     else{
       if(tissue=="BM"){
@@ -659,13 +696,15 @@ server <- function(input, output, session) {
       
       pl = ggplot(DatasetClusters,aes(x = Time, y = Observation, group=ID))+
         facet_wrap(~Cluster,ncol = 1) +
-        labs(x = "Days", y = "") +
+        labs(x = "Months", y = "") +
         scale_y_continuous(limits=c(-1, 8) ,
                            breaks = seq(0,8,2),
                            labels = c("NEG","PNQ",TeX("$10^{-3}$"),TeX("$10^{-2}$"),TeX("$10^{-1}$")) ) +
         theme_bw() +
         theme(legend.position = "top",
-              plot.margin = unit(c(0, 0,0,0), "cm"))
+              plot.margin = unit(c(0, 0,0,0), "cm"))+
+        scale_x_continuous(breaks = seq(0, max(DatasetClusters$Time), 60),
+                           labels = seq(0, max(DatasetClusters$Time), 60) / 30)
       
       if("Unclassified" %in% unique(DatasetClusters$Cluster)  )
       {
@@ -720,7 +759,7 @@ server <- function(input, output, session) {
       geom_step( data = ggsurv$plot$data, aes(x = time, y = surv,  color = strata) ) +
       geom_point(data = ggsurv$plot$data[ggsurv$plot$data$n.censor > 0, , drop = FALSE],
                  aes(x = time, y = surv,  color = strata), size = 4, shape = "+")+
-      theme_bw()+ labs(x = "Year", y = "TTP", fill = "Cluster", color = "Cluster")+
+      theme_bw()+ labs(x = "Years", y = "TTP", fill = "Cluster", color = "Cluster")+
       scale_color_manual(values = colors)+scale_fill_manual(values = colors)+
       scale_x_continuous(breaks = c(0,3,6,9,12,15)*365.25, labels = c(0,3,6,9,12,15))+
       annotate("text", x = pval$pval.x, y = pval$pval.y,
@@ -751,7 +790,20 @@ server <- function(input, output, session) {
                  label = round(surv_median_values$median/365,digits = 3), size = 3, hjust = 0)
     }
     
-    output$survYoungPlot <- renderPlot({ggsurvplot})
+    ggsurv$table = ggsurv$table +
+      labs(y = "", x = "Years") + 
+      scale_x_continuous(breaks = c(0,3,6,9,12,15)*365.25, labels = c(0,3,6,9,12,15))+
+      #scale_x_continuous(breaks = seq(0, max(ggsurv$table$data$time), 365), labels = seq(0, max(ggsurv$table$data$time), 365) / 365)+ 
+      theme(legend.position = "none") +
+      scale_color_manual(values = colors, labels = names(colors),breaks = names(colors) )+
+      scale_y_discrete(labels = function(x) {
+        rev(sapply(x, function(label) {
+          paste0('<span style="color:', colors[label], ';">', label, '</span>')
+        }))
+      })
+    
+    
+    output$survYoungPlot <- renderPlot({ggsurvplot/ ggsurv$table + plot_layout(heights = c(3, 1))})
     
     if(selectColor != "None")
     {
@@ -835,7 +887,10 @@ server <- function(input, output, session) {
           }else
             pl = pl + geom_line(data = Data, aes(x = Time,y = Observation, group = ID))
           
-          pl = pl / listV$DisTimeBX + plot_layout(heights = c(2,0.5))
+          pl = (pl+
+                  labs( x = "Months", y = "" )+
+                  scale_x_continuous(breaks = seq(0, max(Data$Time), 60),
+                                     labels = seq(0, max(Data$Time), 60) / 30)) / listV$DisTimeBX + plot_layout(heights = c(2,0.5))
           return(pl)
         }
       })
@@ -850,7 +905,10 @@ server <- function(input, output, session) {
             theme(legend.position = "none",
                   plot.margin = unit(c(0, 0,0,0), "cm"))+
             xlim(min(Data$Time),
-                 max(Data$Time))
+                 max(Data$Time))+
+            labs( x = "Months", y = "" )+
+            scale_x_continuous(breaks = seq(0, max(Data$Time), 60),
+                               labels = seq(0, max(Data$Time), 60) / 30)
           
           if(selectColor!="None"){
             listV$DataFCMtrunc = listV$DataFCMtrunc %>% 
@@ -862,7 +920,7 @@ server <- function(input, output, session) {
                                 data =  listV$DataFCMtrunc %>%
                                   as.data.frame() ,
                                 x = "Time",y = "Observation", group = "ID", color =selectColor )+
-              labs(col = input$youngMCLselectColor )
+              labs(col = input$youngMCLselectColor)
             
             if(selectColor %in% c("ttpevent","rnd1") )
               pl = pl + scale_color_manual(values = c("0" = "blue","1"="red"))
@@ -1048,6 +1106,25 @@ server <- function(input, output, session) {
             annotate("text", x = CutTime+surv_median_values$median, y = 0,
                      label = round((CutTime+surv_median_values$median)/365,digits = 3), size = 3, hjust = 0)
         }
+        ggsurv$table -> tableSurv
+        #ggsurv$table$data$time =  CutTime+ggsurv$table$data$time
+        tableSurv$layers[[1]]$data$time =  CutTime+tableSurv$layers[[1]]$data$time
+        
+        tableSurv = tableSurv +
+          labs(y = "", x = "Years") + 
+          scale_x_continuous(breaks = c(0,3,6,9,12,15)*365.25, labels = c(0,3,6,9,12,15))+
+          #scale_x_continuous(breaks = seq(0, max(ggsurv$table$data$time), 365),
+          #                   labels = seq(0, max(ggsurv$table$data$time), 365) / 365)+ 
+          theme(legend.position = "none") +
+          scale_color_manual(values = colors)+
+          scale_y_discrete(labels = function(x) {
+            rev(sapply(x, function(label) {
+              paste0('<span style="color:', colors[label], ';">', label, '</span>')
+            }))
+          })
+        
+        
+        ggsurvplot = ggsurvplot/ tableSurv + plot_layout(heights = c(3, 1))
         
         Classification_new = listV$ClassificationOUT$ClassMatrix_entropy %>% select(ID,Cluster)
         meancurves = as.data.frame(listV$CONNECTORList.FCM$FCM$prediction$meancurves)
@@ -1091,6 +1168,7 @@ server <- function(input, output, session) {
           geom_line(data = meancurves, aes(x=Time, y = Observation, col = "Mean Curves"),linewidth =1, linetype = "dashed")+
           labs(title = paste(input$tissueBox, " classification") )+
           theme_bw()
+        
         listV$ggsurvLast = ggsurvplot
         listV$pl = pl1/ggsurvplot
         
