@@ -6,6 +6,21 @@ info_pz_MCL0208_connector <- readRDS( system.file("Data","info_pz_MCL0208_connec
 source( system.file("Shiny","AuxFunctions.R", package = "mclexplorer") )
 source( system.file("Rfunctions","test_funct_MCL0208.R", package = "mclexplorer") )
 
+qual_vars<-c("Progression-free survival (PFS)" = "PFS",
+             "Overall Survival (OS)" = "OS","time to progression (TTP)" = "TTP",
+             #"TP53_loss_or_mut",
+             "TP53" = "TP53", "TP53 delation" = "TP53_loss_array",
+             "TP53 disruption" = "TP53_disruption",
+             "Ki67 Classes (0 = .. ; 1 = ...)" = "Ki67_Classes",
+             "Morphologic BM infiltration" = "BM_INFILTRATION","
+             HIGH LDH" = "HIGH_LDH\n",
+             "ECOG" = "PS_ECOG","HISTOLOGY" = "HISTOLOGY","STAGE" = "AA_STAGE",
+             "MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)" = "MARKER (0=NO; 1=IGH; 2=BCL1; 3=BOTH)",
+             "Ki67 Classes_1 (0 = .. ; 1 = ...)" = "Ki67_Classes_1","MIPI Classes" = "MIPI_Classes",
+             "Clinical response pre ASCT" = "CLINICAL_SIT_PRE_ASCT",
+             "Clinical response post ASCT" = "CLINICAL_SIT_postASCT")
+
+
 axistheme = theme(
   plot.caption = element_text(size = 12, face = "italic", family = "Times"),
   axis.text.x = element_text(size = 14, family = "Times"),
@@ -520,15 +535,15 @@ server <- function(input, output, session) {
     }
     
     info_tmp<-full_join(pz_data,mut)
-    qual_vars<-colnames(mut[,2:ncol(mut)])
+    qual_var_type<-colnames(mut[,2:ncol(mut)])
     
     num_TRUE<-info_tmp%>%
       filter(!is.na(get(paste("Cluster",tissue,sep = "_"))))%>%
-      select(qual_vars)%>%
+      select(qual_var_type)%>%
       colSums(na.rm = TRUE)%>%
       as.vector()
     
-    updateSelectInput("var_typeMCL" , session = session, choices =  qual_vars[num_TRUE>0] )
+    updateSelectInput("var_typeMCL" , session = session, choices =  qual_var_type[num_TRUE>0] )
     MCLvalues$info_pz_MCL0208 = info_tmp
   })
   

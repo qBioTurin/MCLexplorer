@@ -197,7 +197,7 @@ ui <- dashboardPage(
                                                   column(12, plotOutput("MCL_clusteringPlot",height = "800px"))
                                                 )
                                        ),
-                                       tabPanel("Clinical assestment", value = "panel_Clinical",
+                                       tabPanel("Clinical assessment", value = "panel_Clinical",
                                                 fluidRow(
                                                   column(3,
                                                          checkboxInput("ClusterCheckMCL",label = "Unify the CONNECTOR clusters.",value = T)
