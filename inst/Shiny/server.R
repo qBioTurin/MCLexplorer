@@ -20,6 +20,14 @@ qual_vars<-c("Progression-free survival (PFS)" = "PFS",
              "Clinical response pre ASCT" = "CLINICAL_SIT_PRE_ASCT",
              "Clinical response post ASCT" = "CLINICAL_SIT_postASCT")
 
+quant_vars<-c("Age" = "Age","Flow PB" = "flow PB","Flow BM" = "flow BM",
+              "% Morphologic infiltration in BM" = "%_BM_INFILTR\n","MIPI" = "MIPI",
+              "HB at the diagnosis" = "HB_LEVEL\n",
+              "Neutrophils Counts at the diagnosis" = "NEUTRO_COUNT",
+              "Lymphocytes Counts at the diagnosis" = "LYMPHO_COUNT", "Platelets" = "PLTS",
+              "% KI_67" = "KI_67")
+
+vars_values = c(qual_vars,quant_vars)
 
 axistheme = theme(
   plot.caption = element_text(size = 12, face = "italic", family = "Times"),

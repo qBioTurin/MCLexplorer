@@ -128,7 +128,7 @@ ui <- dashboardPage(
                          style = "font-size:18px; color:#666666; padding:10px; text-align:left;",
                          tags$ul(
                            tags$li(strong("Clustering Exploration:"), " Visualize and explore the MCL0208 dataset, which contains key information about connector clusters."),
-                           tags$li(strong("Clasification Exploration:"), " Classify data from the Young dataset based on clusters identified in the MCL0208 analysis."),
+                           tags$li(strong("Classification Exploration:"), " Classify data from the Young dataset based on clusters identified in the MCL0208 analysis."),
                            tags$li(strong("Costum Classification:"), " Upload and classify your own dataset to apply insights gained from the MCL0208 clusters to new data.")
                          )
                        )
