@@ -9,11 +9,11 @@
 
 This application is designed to aid researchers in inspecting and classifying CONNECTOR clusters for Minimal Residual Disease in Mantle Cell Lymphoma.
 
-1. **Clustering Exploration**: Visualize and explore the MCL0208 dataset, which contains key information about connector clusters.
+1. **Clustering Exploration**: Visualize and explore the 'FIL-MCL0208' dataset, which contains key information about connector clusters.
 
-2. **Classification Exploration**: Classify data from the Young dataset based on clusters identified in the MCL0208 analysis.
+2. **Classification Exploration**: Classify data from the 'MCL Younger' dataset based on clusters identified in the 'FIL-MCL0208' analysis.
 
-3. **Costum Classification**: Upload and classify your own dataset to apply insights gained from the MCL0208 clusters to new data.
+3. **Costum Classification**: Upload and classify your own dataset to apply insights gained from the 'FIL-MCL0208' clusters to new data.
             
 <p align="center">
     <img src="./inst/Shiny/www/Framework.png" alt="Framework" width="400">

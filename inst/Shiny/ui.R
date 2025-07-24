@@ -127,9 +127,9 @@ ui <- dashboardPage(
                        div(
                          style = "font-size:18px; color:#666666; padding:10px; text-align:left;",
                          tags$ul(
-                           tags$li(strong("Clustering Exploration:"), " Visualize and explore the MCL0208 dataset, which contains key information about connector clusters."),
-                           tags$li(strong("Classification Exploration:"), " Classify data from the Young dataset based on clusters identified in the MCL0208 analysis."),
-                           tags$li(strong("Costum Classification:"), " Upload and classify your own dataset to apply insights gained from the MCL0208 clusters to new data.")
+                           tags$li(strong("Clustering Exploration:"), " Visualize and explore the 'FIL-MCL0208' dataset, which contains key information about connector clusters."),
+                           tags$li(strong("Classification Exploration:"), " Classify data from the 'MCL Younger' dataset based on clusters identified in the 'FIL-MCL0208' analysis."),
+                           tags$li(strong("Costum Classification:"), " Upload and classify your own dataset to apply insights gained from the 'FIL-MCL0208' clusters to new data.")
                          )
                        )
                        # 
@@ -140,7 +140,7 @@ ui <- dashboardPage(
                        # ),
                        # column(width = 6,
                        #        h2(em("Inspection of MRD kinetics in Mantle Cell Lymphoma")),
-                       #        h4(" Fondazione Italiana Linfomi (FIL) MCL0208 Clinical Trial")
+                       #        h4(" Fondazione Italiana Linfomi (FIL) FIL-MCL0208 Clinical Trial")
                        # )
                 ),
                 p(img(src = "Framework.png", height = "40%", width = "80%", style = "margin:20px 0px"), align = "center"),
@@ -166,7 +166,7 @@ ui <- dashboardPage(
               )
       ),
       tabItem(tabName = "mcl208",
-              h2("FIL-MCL208 Exploration"),
+              h2("FIL-MCL0208 Exploration"),
               fluidRow(
                 column(6,
                        selectInput(inputId = "tissueMCL",
@@ -322,7 +322,7 @@ ui <- dashboardPage(
               )
       ),
       tabItem(tabName = "youngerMCL_classification",
-              h2("YoungerMCL Exploration"),
+              h2("MCL Younger Exploration"),
               fluidRow(
                 column(width = 6,
                        selectInput(inputId = "tissueBox",
