@@ -2,12 +2,12 @@
 % Please edit documentation in R/run.R
 \name{mclexplorer.run}
 \alias{mclexplorer.run}
-\title{Run mclexplorer}
+\title{Run MCLexplorer}
 \usage{
 mclexplorer.run()
 }
 \description{
-function to lunch the mclexplorer shiny application.
+Function to launch the MCLexplorer Shiny application.
 }
 \examples{
 \dontrun{
