@@ -49,6 +49,14 @@ library(MCLexplorer)
 MCLexplorer::mclexplorer.run()
 ```
 
+## Dependecies 
+
+Since the R package "ggmosaic" was archived on 2025-11-10, we suggest to install it from its github:
+
+```
+install.packages("devtools")
+devtools::install_github("haleyjeppson/ggmosaic")
+```
 
 <p align="center">
   <a href="https://qbio.di.unito.it/">
