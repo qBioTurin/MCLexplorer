@@ -17,7 +17,16 @@ This application is designed to aid researchers in inspecting and classifying CO
             
 <p align="center">
     <img src="./inst/Shiny/www/Framework.png" alt="Framework" width="400">
-</p>           
+</p> 
+
+<p>
+For full methodological details and results, please refer to and cite:
+<br>
+Cordero, F., Ferrero, S., Pernice, S., Genuardi, E., Volpatto, D., Sirovich, R., Civita, A.M., Evangelista, A., Ragaini, S., Di Rocco, A., Re, A., Stefoni, V., Cavallo, F., Boccomini, C., Balzarotti, M., Zilioli, V.R., Gomes da Silva, M., Arcaini, L., Celli, M., Zaccaria, G.M., Tortarolo, D., Beccuti, M., Hoster, E., Pott, C., Macintyre, E., Hermine, O., Dreyling, M. and Ladetto, M. (2026). 
+<i>Dissecting minimal residual disease dynamics to improve outcome prediction in mantle cell lymphoma: Data from the Fondazione Italiana Linfomi (FIL)-MCL0208 clinical trial.</i> 
+HemaSphere, 10: e70375. 
+<a href="https://doi.org/10.1002/hem3.70375">https://doi.org/10.1002/hem3.70375</a>
+</p>
                          
 ## Getting started
 
