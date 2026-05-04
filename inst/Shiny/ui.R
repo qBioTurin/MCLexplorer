@@ -182,6 +182,13 @@ ui <- dashboardPage(
                 target = "_blank",
                 "Simone Pernice, et al. 'CONNECTOR, fitting and clustering of longitudinal data to reveal a new risk stratification system', Bioinformatics (2023)."
               ),
+                br(), br(),
+              p("For full methodological details on MRD dynamics, please refer to and cite:"),
+              tags$a(
+    href = "https://doi.org/10.1002/hem3.70375",
+    target = "_blank",
+    "Cordero, F., et al. 'Dissecting minimal residual disease dynamics to improve outcome prediction in mantle cell lymphoma: Data from the FIL-MCL0208 clinical trial', HemaSphere (2026)."
+  ),
               br(), br(),
               tags$a(
                 href = "https://qbioturin.github.io/connector/",
